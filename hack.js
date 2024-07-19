@@ -2,6 +2,10 @@
 
 // This is a script written for the game Bitburner V2.6
 
+// todo: add proccess id to log file?
+// todo: maybe check required ports?
+// todo: write money threshhold to file somewhere so we can save that
+
 // new process! 
 // phase 1: reducing security
 // phase 2: growing while keeping security low
@@ -67,14 +71,46 @@ export async function main(ns) {
     return;
   }
 
+  async function grow() {
+    let growth = await ns.grow(target);
+    log("grow");
+    return growth;
+  }
+
+  async function weaken() {
+    let reducedSecurity = await ns.weaken(target);
+    log("weaken");
+    return reducedSecurity;
+  }
+
+  async function hack() {
+    let earnedMoney = await ns.hack(target);
+    log("hack");
+    return earnedMoney;
+  }
+
+  async function maxOutServer() {
+    // this function will loop as long as it takes to reduce security to min and raise money to max. 
+    while (true) {
+      updateServerInfo();
+      if (securityLevel > minSecurityLevel + securityThreshold) {
+        await weaken();
+      } else if (moneyAvailable < maxMoney) {
+        await grow();
+      } else {
+        await weaken(); // we weaken just once more, just in case
+        return;
+      }
+    }
+  }
+
   // ------------------ main script ------------------
   log("start", "starting hack on server: " + target);
 
   // ------------------ phase 1 - reducing security ------------------
   while (phase == 0) {
     if (securityLevel > minSecurityLevel + securityThreshold) {
-      await ns.weaken(target);
-      log("weaken");
+      await weaken();
     } else {
       phase++;
     }
@@ -83,11 +119,9 @@ export async function main(ns) {
   // ------------------ phase 2 - growing ------------------
   while (phase == 1) {
     if (securityLevel > minSecurityLevel + securityThreshold) {
-      await ns.weaken(target);
-      log("weaken");
+      await weaken();
     } else if (moneyAvailable < maxMoney) {
-      await ns.grow(target);
-      log("grow");
+      await grow();
     } else {
       phase++;
     }
@@ -96,10 +130,7 @@ export async function main(ns) {
   // ------------------ phase 3 - determining money threshold ------------------
   while (phase == 2) {
     // at this point we should have money maxed on the server and security should be close to the minimum. 
-    // with one last security reduction, we can also reduce security to the minimum to have perfect conditions for determining the growth factor. 
-
-    await ns.weaken(target);
-    log("weaken");
+    await maxOutServer();
 
     // first we check if our hacking level is high enough to hack the server. if not, we wait until it is.
     if (ns.getServerRequiredHackingLevel(target) <= ns.getHackingLevel()) {
@@ -107,95 +138,48 @@ export async function main(ns) {
       log("Waiting for hacking level (" + waitTimeForHackingLevel + " minutes). Current hacking level: " + ns.getHackingLevel() + ", required hacking level: " + ns.getServerRequiredHackingLevel(target));
     }
 
-    // now we hack the server x times and grow it. if we reach max money after 1 grow, we increase x by 1. repeat until we can determine a good money threshold.
+    // Now we hack the server x times and grow it. if we reach max money after 1 grow, we increase x by 1. repeat until we can determine a good money threshold.
+    // This is just in case we overshoot with the grow amount, e.g. hack reduces money by 1%, but we increase money by 10% with grow. This is to prevent this from giving us an inefficient value for the money theshold. Though I have absolutely no idea if this will ever even occur. 
+    var hack_amount = 1; // number of times we hack the server before growing
+    while (true) {
+      updateServerInfo();
+      if (securityLevel == minSecurityLevel && moneyAvailable == maxMoney) { // just making sure we actually have the initial conditions met
+        for (var i = 0; i < hack_amount; i++) {
+          await hack();
+        }
+      } else {
+        log("error", "error 49449"); // this should never even be possible. 
+        ns.tprint("error 49449");
+        return;
+      }
+
+      growAmount = await grow();
+
+      updateServerInfo();
+      if (moneyAvailable == maxMoney) {
+        // we grew more than we reduce with hack so we increase x by 1 and try again after resetting the initial conditions. 
+        hack_amount++;
+      } else {
+        // we determine the grow amount and set the money threshold.
+        moneyThreshold = 1 - growAmount;
+        log("", "money threshhold set to " + moneyThreshold + " (grow amount: " + growAmount + ")");
+        phase++;
+        break;
+      }
+    }
   }
+
+  // todo: save the money threshold to a file somewhere so we can load it and skip this whole initial phase in the future.
 
   // ------------------ phase 4 - hacking ------------------
-
-}
-// ------------------------------------------------
-
-
-// todo: add proccess id to log file
-// todo: somehow add backdoor installing in here
-// todo: add nuking at beginning
-// todo: check required hacking level and required ports
-// todo: floor security to 3 digits or so in log file. floor money to 0 digits. 
-// todo: also log in separate column: current hacking level? time since last loop? 
-// todo: combine log function together with actions like hack, grow and weaken? 
-// todo: add to log function the time in seconds since last log function call instead of total time since start of script
-// todo: to initialize everything. first reduce security, then grow and reduce security, then alternate between hacking and growing and weaken until one grow after a hack does not get us to max money. that will be the new money threshhold. 
-// todo: write money threshhold to file somewhere so we can save that
-
-// ns.disableLog('ALL')
-
-export async function main(ns) {
-  if (securityLevel < minSecurityLevel + securityThreshold) { // in case server already is maxxed out, we can hack to make sure we remove some money so we have room to grow
-    if (moneyAvailable > maxMoney * moneyThreshold) {
-      log("hack");
-      await ns.hack(target);
-    }
-  }
-
-  while (true) { // first we reduce security and grow the server to near max. 
-    loop++;
-    var moneyAvailable = Math.floor(ns.getServerMoneyAvailable(target)); // current momey available on server
-    var securityLevel = Math.floor(ns.getServerSecurityLevel(target) * 1000) / 1000; // current security level of target server
-
+  while (phase == 4) {
+    updateServerInfo();
     if (securityLevel > minSecurityLevel + securityThreshold) {
-      log("weaken");
-      await ns.weaken(target);
-    } else if (moneyAvailable < maxMoney) {
-      log("grow");
-      growAmountLast = growAmount;
-      growAmount = await ns.grow(target);
-    } else {
-      break; // if we're at a point where we could hack, we go to the next loop
-    }
-  }
-  ns.write(log_file, "grow amount last: " + growAmountLast + "\n");
-  moneyThreshold = 1 - growAmountLast;
-  log("", "money threshhold set to " + moneyThreshold);
-
-  while (true) {
-    var action = "";
-    loop++;
-
-    var moneyAvailable = Math.floor(ns.getServerMoneyAvailable(target)); // current momey available on server
-    var securityLevel = Math.floor(ns.getServerSecurityLevel(target) * 1000) / 1000; // current security level of target server
-
-    if (securityLevel > minSecurityLevel + securityThreshold) {
-      action = "weaken";
+      await weaken();
     } else if (moneyAvailable < maxMoney * moneyThreshold) {
-      action = "grow";
+      await grow();
     } else {
-      action = "hack";
-    }
-
-    log(action);
-
-    switch (action) {
-      case "weaken":
-        await ns.weaken(target);
-        break;
-      case "grow":
-        await ns.grow(target);
-        break;
-      case "hack":
-        // if we can hack, we do so. but if we don't have the required hacking level, we wait for 10 minutes before trying again. 
-        if (ns.getServerRequiredHackingLevel(target) <= ns.getHackingLevel()) {
-          await ns.hack(target);
-        } else {
-          while (ns.getServerRequiredHackingLevel(target) > ns.getHackingLevel()) {
-            ns.write(log_file, getDateTime() + " | Hacking level (" + ns.getHackingLevel() + ") too low for server: " + target + " (" + ns.getServerRequiredHackingLevel(target) + ")" + "\n");
-            await ns.sleep(1000 * 60 * 10); // wait 10 minutes
-          }
-        }
-        break;
-      default:
-        ns.tprint("error 51654");
-        log("error 51654");
-        return;
+      await hack();
     }
   }
 }
