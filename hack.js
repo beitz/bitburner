@@ -125,6 +125,50 @@ export async function main(ns) {
     }
   }
 
+  function readData(file) {
+    // this function will read the data from the file and return a 2d array with servers in the first column and thresholds in the second column
+    let data = ns.read(file);
+    if (data === "") {
+      return [];
+    }
+    // Remove all carriage return characters
+    data = data.replace(/\r/g, "");
+    return data.split("\n").map(row => {
+      const columns = row.split("|");
+      // Assuming the second column should be converted to a number
+      columns[1] = parseFloat(columns[1]);
+      return columns;
+    });
+  }
+
+  function writeData(file, data) {
+    // this function will take the 2d array and write it to the file
+    let dataStr = data.map(row => row.join("|")).join("\n");
+    ns.write(file, dataStr, "w");
+  }
+
+  function findThreshold(server, data) {
+    // this function will try to find the target server within the provided 2d array (should be first item in the column) and return the value from the second column if something is found
+  // if nothing is found just return 0
+    for (let i = 0; i < data.length; i++) {
+      if (data[i][0] === server) {
+        return data[i][1];
+      }
+    }
+    return 0;
+  }
+
+  function addThreshold(server, threshold, data) {
+    // this function will add a row to the 2d array if the server is not already in the array
+    // if we already have the data, we don't add it again
+    if (findThreshold(server, data) == 0) {
+        ns.tprint("adding server");
+        data.push([server, threshold]);
+    } else {
+        ns.tprint("server already exists");
+    }
+  }
+
   // ------------------ main script ------------------
   log("start", " >>>>> starting hack on server: " + target);
 
@@ -148,6 +192,14 @@ export async function main(ns) {
     } else {
       phase++;
     }
+  }
+
+  // first we check if the server is already in the data file. if it is, we use that value as the money threshold and skip phase 2.
+  var moneyThresholdData = readData(moneyThresholdsFile);
+  let serverExistsInData = findThreshold(target, moneyThresholdData);
+  if (serverExistsInData != 0) {
+    moneyThreshold = serverExistsInData;
+    phase++;
   }
 
   // ------------------ phase 2 - determining money threshold ------------------
@@ -191,6 +243,15 @@ export async function main(ns) {
         // we determine the grow amount and set the money threshold.
         moneyThreshold = growAmount - 1;
         log("info", "money threshhold set to " + moneyThreshold + " (grow amount: " + growAmount + ")");
+
+        // we add the server to the data file with the money threshold
+        var moneyThresholdData = readData(moneyThresholdsFile);
+        let serverExistsInData = findThreshold(target, moneyThresholdData);
+        if (serverExistsInData == 0) {
+          addThreshold(target, moneyThreshold, moneyThresholdData);
+          writeData(moneyThresholdsFile, moneyThresholdData);
+        }
+        
         phase++;
         break;
       }
