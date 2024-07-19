@@ -7,6 +7,7 @@
 // todo: write money threshhold to file somewhere so we can save that
 // todo: actually, save the current phase we're in as well so we can jump right back into the right phase
 // todo: use gradient decent for determining money threshhold to improve speed for cases where grow = 10% or so and hack = -0.4% ?
+// todo: add multithreading to the script to improve speed.
 
 // new process! 
 // phase 1: reducing security
@@ -27,6 +28,7 @@ export async function main(ns) {
   var target = ns.args[0]; // target server
   var logging = true; // allows to enable or disable logging in the log file. 
   var log_file = "log_hack_" + target + ".txt"; // log file where we log all the data. 
+  var moneyThresholdsFile = "moneyThresholds.txt"; // file where we store the money thresholds for the servers.
   var securityThreshold = 0.05; // When the security is this much above the server minimum, we weaken the server again. 
   var moneyThreshold = 0.9; // The threshold (available money / max money on server) at which we are allowed to hack the server. 
   var phase = 0; // phase of the script. 0 = reducing security, 1 = growing, 2 = determining money threshold, 3 = hacking
@@ -67,15 +69,15 @@ export async function main(ns) {
   function log(action, comment = "") {
     // Simple logging function to have some kind of overview of what's happening. Made to be exported to csv file for analysis.
     updateServerInfo();
-    var log_array = [getDateTime(), 
-      ws(phase, 3), 
-      ws(timer(), 5), 
-      ws(action, 8), 
-      ws(securityLevel.toFixed(3),8), 
-      ws(minSecurityLevel.toFixed(3), 8), 
-      ws(moneyAvailable, maxMoney.toString().length+2), 
-      ws(maxMoney, maxMoney.toString().length+2), 
-      ws(comment, comment.length+2)];
+    var log_array = [getDateTime(),
+    ws(phase, 3),
+    ws(timer(), 5),
+    ws(action, 8),
+    ws(securityLevel.toFixed(3), 8),
+    ws(minSecurityLevel.toFixed(3), 8),
+    ws(moneyAvailable, maxMoney.toString().length + 2),
+    ws(maxMoney, maxMoney.toString().length + 2),
+    ws(comment, comment.length + 2)];
     if (!ns.fileExists(log_file) || ns.read(log_file) === "") {
       ns.write(log_file, "timestamp|phase|timer|action|security|min security|available money|max money|comment" + "\n");
     }
@@ -149,7 +151,7 @@ export async function main(ns) {
 
   function findThreshold(server, data) {
     // this function will try to find the target server within the provided 2d array (should be first item in the column) and return the value from the second column if something is found
-  // if nothing is found just return 0
+    // if nothing is found just return 0
     for (let i = 0; i < data.length; i++) {
       if (data[i][0] === server) {
         return data[i][1];
@@ -162,10 +164,10 @@ export async function main(ns) {
     // this function will add a row to the 2d array if the server is not already in the array
     // if we already have the data, we don't add it again
     if (findThreshold(server, data) == 0) {
-        ns.tprint("adding server");
-        data.push([server, threshold]);
+      ns.tprint("adding server");
+      data.push([server, threshold]);
     } else {
-        ns.tprint("server already exists");
+      ns.tprint("server already exists");
     }
   }
 
@@ -251,7 +253,7 @@ export async function main(ns) {
           addThreshold(target, moneyThreshold, moneyThresholdData);
           writeData(moneyThresholdsFile, moneyThresholdData);
         }
-        
+
         phase++;
         break;
       }
