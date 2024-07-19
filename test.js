@@ -1,22 +1,63 @@
 /** @param {NS} ns */
+
+// this is a test script to test the read and write functions
+
+// the rows in the file are separated with newline characters, i.e. "\n"
+// the columns in the file are separated with "|" characters
+
 export async function main(ns) {
-    // first argument is the target server
-    // check if we only have one argument. if yes, execute code, if not return help to terminal
-    // this function will print to the terminal the maximum money on the server, the min security level and other useful information
-
-    if (ns.args.length == 1) {
-        var target = ns.args[0];
-        var maxMoney = Math.floor(ns.getServerMaxMoney(target)); // maximum money available on server
-        var moneyAvailable = Math.floor(ns.getServerMoneyAvailable(target)); // current momey available on server
-        var minSecurityLevel = Math.floor(ns.getServerMinSecurityLevel(target) * 1000) / 1000; // minimum security level of target server
-        var securityLevel = Math.floor(ns.getServerSecurityLevel(target) * 1000) / 1000; // current security level of target server
-
-        ns.tprint("Server: " + target);
-        ns.tprint("Max money: " + maxMoney);
-        ns.tprint("Money available: " + moneyAvailable);
-        ns.tprint("Min security level: " + minSecurityLevel);
-        ns.tprint("Security level: " + securityLevel);
-    } else {
-        ns.tprint("Usage: run test.js <target>");
+    var file = "moneyThresholds.txt";
+    var moneyThresholdsFile = "moneyThresholds.txt";
+  
+    // this function will read the data from the file and return a 2d array with servers in the first column and thresholds in the second column
+    function readData(file) {
+        let data = ns.read(file);
+        if (data === "") {
+          return [];
+        }
+        // Remove all carriage return characters
+        data = data.replace(/\r/g, "");
+        return data.split("\n").map(row => {
+          const columns = row.split("|");
+          // Assuming the second column should be converted to a number
+          columns[1] = parseFloat(columns[1]);
+          return columns;
+        });
+      }
+  
+    // this function will take the 2d array and write it to the file
+    function writeData(file, data) {
+      let dataStr = data.map(row => row.join("|")).join("\n");
+      ns.write(file, dataStr, "w");
     }
-}
+
+    // this function will try to find the target server within the provided 2d array (should be first item in the column) and return the value from the second column if something is found
+    // if nothing is found just return 0
+    function findThreshold(server, data) {
+      for (let i = 0; i < data.length; i++) {
+        if (data[i][0] === server) {
+          return data[i][1];
+        }
+      }
+      return 0;
+    }
+
+    // this function will add a row to the 2d array if the server is not already in the array
+    function addThreshold(server, threshold, data) {
+        // if we already have the data, we don't add it again
+        if (findThreshold(server, data) == 0) {
+            ns.tprint("adding server");
+            data.push([server, threshold]);
+        } else {
+            ns.tprint("server already exists");
+        }
+    }
+  
+    ns.tprint("Reading data from file");
+    var moneyThresholdData = readData(moneyThresholdsFile);
+    ns.tprint(moneyThresholdData);
+    let test = findThreshold("foodnstuff", moneyThresholdData);
+    ns.tprint(test);
+    addThreshold("sigma-cosmetics", 0.74, moneyThresholdData);
+    writeData(moneyThresholdsFile, moneyThresholdData);
+  }

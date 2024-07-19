@@ -202,6 +202,7 @@ export async function main(ns) {
   var moneyThresholdData = readData(moneyThresholdsFile);
   let serverExistsInData = findThreshold(target, moneyThresholdData);
   if (serverExistsInData != 0) {
+    log("info", "Using money threshold from file: " + serverExistsInData);
     moneyThreshold = serverExistsInData;
     phase++;
   }
