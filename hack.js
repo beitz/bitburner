@@ -189,7 +189,7 @@ export async function main(ns) {
         hack_amount++;
       } else {
         // we determine the grow amount and set the money threshold.
-        moneyThreshold = 1 - growAmount;
+        moneyThreshold = growAmount - 1;
         log("info", "money threshhold set to " + moneyThreshold + " (grow amount: " + growAmount + ")");
         phase++;
         break;
