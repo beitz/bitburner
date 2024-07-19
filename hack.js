@@ -8,6 +8,7 @@
 // todo: actually, save the current phase we're in as well so we can jump right back into the right phase
 // todo: use gradient decent for determining money threshhold to improve speed for cases where grow = 10% or so and hack = -0.4% ?
 // todo: add multithreading to the script to improve speed.
+// todo: maybe reduce security from time to time once theshold is reached when stuck in the loop where we increase hack amount by 1.
 
 // new process! 
 // phase 1: reducing security
@@ -112,6 +113,7 @@ export async function main(ns) {
 
   async function maxOutServer() {
     // this function will loop as long as it takes to reduce security to min and raise money to max. 
+    log("info", "maxing out server");
     while (true) {
       updateServerInfo();
       if (securityLevel > minSecurityLevel + securityThreshold) {
@@ -268,7 +270,7 @@ export async function main(ns) {
     updateServerInfo();
     if (securityLevel > minSecurityLevel + securityThreshold) {
       await weaken();
-    } else if (moneyAvailable < maxMoney * moneyThreshold) {
+    } else if (moneyAvailable < maxMoney * (1 - moneyThreshold)) {
       await grow();
     } else {
       await hack();
