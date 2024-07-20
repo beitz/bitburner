@@ -8,7 +8,19 @@
 // todo: actually, save the current phase we're in as well so we can jump right back into the right phase
 // todo: use gradient decent for determining money threshhold to improve speed for cases where grow = 10% or so and hack = -0.4% ?
 // todo: add multithreading to the script to improve speed.
+//       - we'll have to provide the number of threads as an argument to the script as it doesn't seem to work with flags, no matter what I try.
+
 // todo: maybe reduce security from time to time once theshold is reached when stuck in the loop where we increase hack amount by 1.
+// todo: add amount of threads used to moneyThresholds.txt file
+// todo: consider the threads that are being used when reducing security to prevent going too far with the security reduction.
+// todo: - figure out how to get the threads in the first place. 
+
+// todo: New Idea. Since using more threads just pushes the hack/grow/weaken to the extreme, maybe we can rewrite all of this to try to find the best values for securityThreshold, moneyThreshold and other variables by using gradient decent? 
+//       - We could try to find the best value for each for each scenario and save that somewhere. 
+
+// todo: Another new idea. Separate the first few phses into different scripts and leave only the simple hacking. 
+//       - Use another script to manage all the scripts and keep track of the phases on each server and all related variables. 
+//       - That script would be used to start or kill scripts, manage free RAM on the home server as well as other servers and it would try to maximize profits. 
 
 // new process! 
 // phase 1: reducing security
@@ -18,8 +30,14 @@
 
 export async function main(ns) {
   // Check for correct number of arguments. If not, print help. 
-  if (ns.args.length != 1) {
-    ns.tprint('[this_script.js] [target server name]');
+
+  // Check number of arguments. If 0, print help.
+  // reset moneyThreshold can be set to true or false. 
+  if (ns.args.length < 1) {
+    ns.tprint("Usage: run hack.js <target> (threads)");
+    ns.tprint("Example: run hack.js foodnstuff 4");
+    ns.tprint("<target> = target server to hack");
+    ns.tprint("(reset moneyThreshold) = optional: reset the money threshold for the target server. Default is false."); // Useful if we're using more threads now and the ratio of the original money threshold is off.
     return;
   }
 
@@ -27,6 +45,7 @@ export async function main(ns) {
 
   // ------------------ variables ------------------
   var target = ns.args[0]; // target server
+  var resetMoneyThreshold = ns.args[1] || false; // reset money threshold for the target server.
   var logging = true; // allows to enable or disable logging in the log file. 
   var log_file = "log_hack_" + target + ".txt"; // log file where we log all the data. 
   var moneyThresholdsFile = "moneyThresholds.txt"; // file where we store the money thresholds for the servers.
@@ -68,6 +87,9 @@ export async function main(ns) {
   }
 
   function log(action, comment = "") {
+    if (!logging) {
+      return;
+    }
     // Simple logging function to have some kind of overview of what's happening. Made to be exported to csv file for analysis.
     updateServerInfo();
     var log_array = [getDateTime(),
@@ -201,10 +223,12 @@ export async function main(ns) {
   // first we check if the server is already in the data file. if it is, we use that value as the money threshold and skip phase 2.
   var moneyThresholdData = readData(moneyThresholdsFile);
   let serverExistsInData = findThreshold(target, moneyThresholdData);
-  if (serverExistsInData != 0) {
-    log("info", "Using money threshold from file: " + serverExistsInData);
-    moneyThreshold = serverExistsInData;
-    phase++;
+  if (!resetMoneyThreshold) { // if we're not resetting the money threshold, we use the value from the file if it exists.
+    if (serverExistsInData != 0) {
+      log("info", "Using money threshold from file: " + serverExistsInData);
+      moneyThreshold = serverExistsInData;
+      phase++;
+    }
   }
 
   // ------------------ phase 2 - determining money threshold ------------------
@@ -262,8 +286,6 @@ export async function main(ns) {
       }
     }
   }
-
-  // todo: save the money threshold to a file somewhere so we can load it and skip this whole initial phase in the future.
 
   // ------------------ phase 3 - hacking ------------------
   log("info", " ----- starting phase 3 - hacking");
