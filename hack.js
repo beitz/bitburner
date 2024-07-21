@@ -34,9 +34,10 @@ export async function main(ns) {
   // Check number of arguments. If 0, print help.
   // reset moneyThreshold can be set to true or false. 
   if (ns.args.length < 1) {
-    ns.tprint("Usage: run hack.js <target> (threads)");
-    ns.tprint("Example: run hack.js foodnstuff 4");
+    ns.tprint("Usage: run hack.js <target> (threads) (reset moneyThreshold)");
+    ns.tprint("Example: run hack.js foodnstuff 5 true");
     ns.tprint("<target> = target server to hack");
+    ns.tprint("(threads) = optional: number of threads to use. Default is 1.");
     ns.tprint("(reset moneyThreshold) = optional: reset the money threshold for the target server. Default is false."); // Useful if we're using more threads now and the ratio of the original money threshold is off.
     return;
   }
@@ -46,6 +47,7 @@ export async function main(ns) {
   // ------------------ variables ------------------
   var target = ns.args[0]; // target server
   var resetMoneyThreshold = ns.args[1] || false; // reset money threshold for the target server.
+  var threads = ns.args[2] || 1; // number of threads to use. Default is 1.
   var logging = true; // allows to enable or disable logging in the log file. 
   var log_file = "log_hack_" + target + ".txt"; // log file where we log all the data. 
   var moneyThresholdsFile = "moneyThresholds.txt"; // file where we store the money thresholds for the servers.
