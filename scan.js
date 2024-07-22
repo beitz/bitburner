@@ -1,6 +1,11 @@
 /** @param {NS} ns */
 
-// script that scans all servers recursively and prints all kinds of stuff to the terminal
+// script that scans all servers recursively and stores the data in a 2d array that is then written to a file.
+// alternatively, if first argument = true, print all the data on the terminal instead in a nicely formatted table
+
+// const flags = ns.flags(['t', false]);
+// fuck it. I can't get those fucking flags to work. I'll have to think of something else. for now I'll leave the function out to print to terminal. 
+// maybe I'll write a new script that takes the data from the file and just prints that to the terminal. 
 
 const serverDataFile = 'data/servers.txt';
 
@@ -45,7 +50,7 @@ export async function main(ns) {
         let serverDataHeader = [['date time', 'hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'ramUsed', 
             'purchasedByPlayer', 'moneyAvailable', 'moneyMax', 'hackDifficulty', 
             'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill']];
-        await ns.write(serverDataFile, JSON.stringify(serverData));
+        await ns.write(serverDataFile, JSON.stringify(serverDataHeader));
     }
 
     // for now, let's start simple and just create a 2d array with all the servers connected to home, go through them and store their data in a 2d array.
@@ -60,6 +65,43 @@ export async function main(ns) {
             server.minDifficulty, ns.getHackingLevel(), server.requiredHackingSkill]);
     }
 
+    // todo: put all of this into a separate file I guess since this doesn't work. 
+        // // first we go through the array and clean up the data a bit. E.g. remove decimals from money, reduce decimals to 1 for difficulty, etc. 
+        // for (let i = 0; i < serverData.length; i++) {
+        //     serverData[i][7] = ns.nFormat(serverData[i][7], "$0a"); // money available
+        //     serverData[i][8] = ns.nFormat(serverData[i][8], "$0a"); // money max
+        //     serverData[i][9] = ns.nFormat(serverData[i][9], "0.0a"); // hack difficulty
+        //     serverData[i][10] = ns.nFormat(serverData[i][10], "0.0a"); // min difficulty
+        // }
+
+        // // now we can go trough each row in the data and store the max length of the data in each column 
+        // let maxLengths = [];
+        // for (let i = 0; i < serverData.length; i++) {
+        //     for (let j = 0; j < serverData[i].length; j++) {
+        //         if (maxLengths[j] === undefined || serverData[i][j].length > maxLengths[j]) {
+        //             maxLengths[j] = serverData[i][j].length;
+        //         }
+        //     }
+        // }
+
+        // // now that we have the max lengths of each column, we can go through the data again and add spaces to make the data nicely formatted
+        // // we can use .tofixed() and .padstart() to make sure the data is formatted correctly
+        // // I like to add 2 spaces before the data with padStart(). 
+        // let formattedData = [];
+        // for (let i = 0; i < serverData.length; i++) {
+        //     let formattedRow = '';
+        //     for (let j = 0; j < serverData[i].length; j++) {
+        //         formattedRow += serverData[i][j].padStart(maxLengths[j] + 2);
+        //     }
+        //     formattedData.push(formattedRow);
+        // }
+
+        // // print the data in a nicely formatted table
+        // for (let i = 0; i < formattedData.length; i++) {
+        //     ns.tprint(formattedData[i]);
+        // }
+    
+    
     // now we can store all of that in the servers.txt file
     await ns.write(serverDataFile, JSON.stringify(serverData));
 }

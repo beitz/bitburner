@@ -2,16 +2,18 @@
 
 export async function main(ns) {
     // Define the expected flags
-    const flags = ns.flags([
-        ['t', 1], // -t flag with default value 1
+    var flags = ns.flags([
+        ['t', false], // -t flag. if true then print to terminal instead of writing to file
     ]);
 
+    ns.tprint(flags);
+
     // Get the number of threads from the -t flag
-    const threads = flags.t;
+    // var threads = flags.t;
 
     // Get the server to hack from the arguments
-    const server = ns.args[0];
+    // var server = ns.args[0];
 
     // Log the number of threads and the server to hack
-    ns.tprint(`Hacking ${server} with ${threads} threads.`);
+    // ns.tprint(`Hacking ${server} with ${threads} threads.`);
 }
