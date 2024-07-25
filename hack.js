@@ -49,7 +49,7 @@ export async function main(ns) {
   var resetMoneyThreshold = ns.args[1] || false; // reset money threshold for the target server.
   var threads = ns.args[2] || 1; // number of threads to use. Default is 1.
   var logging = true; // allows to enable or disable logging in the log file. 
-  var log_file = "log_hack_" + target + ".txt"; // log file where we log all the data. 
+  var log_file = "log/log_hack_" + target + ".txt"; // log file where we log all the data. 
   var moneyThresholdsFile = "moneyThresholds.txt"; // file where we store the money thresholds for the servers.
   var securityThreshold = 0.05; // When the security is this much above the server minimum, we weaken the server again. 
   var moneyThreshold = 0.9; // The threshold (available money / max money on server) at which we are allowed to hack the server. 

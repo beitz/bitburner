@@ -33,24 +33,53 @@ export async function main(ns) {
     // maybe I should add a flag to the server object that tells me if I've already scanned it.
     // also I should discard the first server from all all scans as this is always the parent server. 
 
-    // Function to get the current date and time
-    function getDateTime() {
+    function getDateTime() { // Function to get the current date and time
         var now = new Date();
         var dateFormatted = now.toLocaleDateString(`sv`);
         var timeFormatted = now.toLocaleTimeString(`sv`);
         return `${dateFormatted} ${timeFormatted}`;
     }
 
+    function writeData(file, data) { // function to write the data to a file
+        let formattedData = ''; // data we will write to the file
+
+        // check if is 2d array
+        if (Array.isArray(data) && Array.isArray(data[0])) {
+            // we have a 2d array and everything is fine, so we can print the contents
+            for (let i = 0; i < data.length; i++) { // rows
+                for (let j = 0; j < data[i].length; j++) { // columns
+                    // lines are separated by a newline character, columns are separated by a | character
+                    if (j === data[i].length - 1) {
+                        formattedData += data[i][j] + '\n';
+                    } else {
+                        formattedData += data[i][j] + '|';
+                    }
+                }
+            }
+        } else {
+            // we have a 1d array or something else, so we need to print an error message and return
+            ns.tprint(`Error: Data is not a 2d array. Data: ${data}`);
+            return;
+        }
+        ns.write(file, formattedData, 'a');
+
+        // we also write to a second file with a suffix in the file name that is not appended but overwritten
+        const file_current = file.replace('.txt', '_current.txt');
+        // we add the header to the beginning of the file. we convert the 2d array into a string with | as column separator and \n as row separator
+        formattedData = serverDataHeader.map(row => row.join('|')).join('\n') + '\n' + formattedData;
+        ns.write(file_current, formattedData, 'w');
+    }
+
     // variable for 2d array of servers
     let serverData = [];
+    let serverDataHeader = [['date time', 'hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'ramUsed', 
+        'purchasedByPlayer', 'moneyAvailable', 'moneyMax', 'hackDifficulty', 
+        'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill']];
 
     // if a server.txt file exists, then just append the data there. otherwise, create a new file and write the header data there.
     if (!ns.fileExists(serverDataFile)) {
         // In case we start writing a new file, here is the header for that data
-        let serverDataHeader = [['date time', 'hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'ramUsed', 
-            'purchasedByPlayer', 'moneyAvailable', 'moneyMax', 'hackDifficulty', 
-            'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill']];
-        await ns.write(serverDataFile, JSON.stringify(serverDataHeader));
+        writeData(serverDataFile, serverDataHeader);
     }
 
     // for now, let's start simple and just create a 2d array with all the servers connected to home, go through them and store their data in a 2d array.
@@ -103,5 +132,5 @@ export async function main(ns) {
     
     
     // now we can store all of that in the servers.txt file
-    await ns.write(serverDataFile, JSON.stringify(serverData));
+    writeData(serverDataFile, serverData);
 }

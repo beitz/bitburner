@@ -2,10 +2,14 @@
 
 // script that manages everything else
 // - should manage what kind of servers to hack and with how many threads
+//   use hackAnalyzeThreads() to determine the optimal number of threads
 // - should manage our money and the buying of hacknet nodes or additional servers
 // - should manage files on our and other servers
 // - should use scan.js to scan servers and get info on them
 // - should periodically log cool stats for us, like our money and maybe server stats of currently being hacked servers
+// - for the future, run several scripts and manage timing. E.g. run script for lowering security to min and money to max, 
+//   then analyze server, then run hack, weaken and grow scripts with optimal number of threads to maximize profit.
+// - also use ns.exec() to run scripts on other servers.
 
 // periodically get all necessary data like current money, money on servers, etc. and log it
 // then determine with some fancy logic what to do and what scripts to run
