@@ -96,11 +96,8 @@ export async function main(ns) {
 
     // now we should have the serverData array filled with all the servers in the network, including the date time, position, scanned and name
 
-    // first we add the full header to the serverData array
-    serverData = serverDataHeader.concat(serverData);
-
     // then we iterate through the array and add all kinds of data relevant to the server into additional columns
-    for (let i = 1; i < serverData.length; i++) {
+    for (let i = 0; i < serverData.length; i++) {
         let server = ns.getServer(serverData[i][3]);
         let newServerData = [serverData[i][0], serverData[i][1], serverData[i][2], serverData[i][3]];
         newServerData[4] = server.hasAdminRights;
