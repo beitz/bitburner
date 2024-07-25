@@ -47,7 +47,7 @@ export async function main(ns) {
     let servers = []; // array that will hold the servers we get from the scan function
     let serverDataHeader = [['date time', 'pos.', 'scanned', 'hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'ramUsed', 
         'purchasedByPlayer', 'moneyAvailable', 'moneyMax', 'hackDifficulty', 
-        'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill']];
+        'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth']];
 
     // if a server.txt file doesn't exist yet, we initialize it with the header row
     if (!ns.fileExists(serverDataFile)) {
@@ -99,18 +99,20 @@ export async function main(ns) {
     // then we iterate through the array and add all kinds of data relevant to the server into additional columns
     for (let i = 0; i < serverData.length; i++) {
         let server = ns.getServer(serverData[i][3]);
-        let newServerData = [serverData[i][0], serverData[i][1], serverData[i][2], serverData[i][3]];
-        newServerData[4] = server.hasAdminRights;
-        newServerData[5] = server.numOpenPortsRequired;
-        newServerData[6] = server.maxRam;
-        newServerData[7] = server.ramUsed;
-        newServerData[8] = server.purchasedByPlayer;
-        newServerData[9] = server.moneyAvailable;
-        newServerData[10] = server.moneyMax;
-        newServerData[11] = server.hackDifficulty;
-        newServerData[12] = server.minDifficulty;
-        newServerData[13] = ns.getHackingLevel();
-        newServerData[14] = server.requiredHackingSkill;
+        // we start with the date time, position, scanned and hostname
+        let newServerData = [serverData[i][0], serverData[i][1], serverData[i][2], serverData[i][3]]; 
+        newServerData[4] = server.hasAdminRights; // true if the player has admin rights on the server
+        newServerData[5] = server.numOpenPortsRequired; // number of open ports required to hack the server
+        newServerData[6] = server.maxRam; // max ram of the server
+        newServerData[7] = server.ramUsed; // ram used by the server
+        newServerData[8] = server.purchasedByPlayer; // true if the player has purchased the server
+        newServerData[9] = server.moneyAvailable; // money that is currently on the server
+        newServerData[10] = server.moneyMax; // maximum money on the server
+        newServerData[11] = server.hackDifficulty; // security level of the server
+        newServerData[12] = server.minDifficulty; // minimum security level
+        newServerData[13] = ns.getHackingLevel(); // current hacking level of the player
+        newServerData[14] = server.requiredHackingSkill; // required hacking skill to hack the server
+        newServerData[15] = serverData[i][1].split('.').length - 1; // depth of the server in the network
 
         serverData[i] = newServerData;
     }
