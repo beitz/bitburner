@@ -2,6 +2,9 @@
 
 // script that scans all servers recursively and stores relevant server data in a 2d array that is then written to a file.
 
+// todo: add function to scan each server and store the files on the server as well
+// todo: add function to scan how many and which processes are running on each server? 
+
 const serverDataFile = 'data/servers.txt';
 
 export async function main(ns) {
