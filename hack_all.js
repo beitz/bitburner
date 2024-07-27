@@ -132,6 +132,7 @@ export async function main(ns) {
                     ns.exec(hack_file, serverData[i][indexName], maxThreads, moneyThreshold);
                 }
             }
+            // todo: add kill action
         }
     }
 }
