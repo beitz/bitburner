@@ -60,7 +60,7 @@ export async function main(ns) {
 
         let openPortsRequired = server.numOpenPortsRequired;
 
-        let hackDifficulty = server.hackDifficulty;
+        let hackDifficulty = server.requiredHackingSkill;
         let hackingLevel = ns.getHackingLevel();
 
         if (openablePorts >= openPortsRequired && hackingLevel >= hackDifficulty) {
