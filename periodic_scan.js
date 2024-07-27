@@ -9,11 +9,12 @@ export async function main(ns) {
     // if it's a number with an s at the end, it's supposed to be in seconds
     // if its a number with an m at the end, it's supposed to be in minutes
     // if its just a number, use it as seconds
-    if (ns.args.length = 1) {
+    if (ns.args.length === 1) {
         let arg = ns.args[0];
-        if (arg.endsWith('s')) {
+        let lastChar = arg.charAt(arg.length - 1);
+        if (lastChar === 's') {
             interval = parseInt(arg);
-        } else if (arg.endsWith('m')) {
+        } else if (lastChar === 'm') {
             interval = parseInt(arg) * 60;
         } else {
             interval = parseInt(arg);
@@ -25,7 +26,7 @@ export async function main(ns) {
 
     ns.tprint(`Starting periodic scan with interval of ${interval} seconds`);
     while (true) {
-        ns.run('scan.js log');
+        ns.run('scan.js', 1, 'log');
         await ns.sleep(interval * 1000);
     }
 }
