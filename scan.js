@@ -2,7 +2,6 @@
 
 // script that scans all servers recursively and stores relevant server data in a 2d array that is then written to a file.
 
-// todo: add function to scan each server and store the files on the server as well
 // todo: add function to scan how many and which processes are running on each server? 
 
 const serverDataFile = 'data/servers.txt';
@@ -75,7 +74,7 @@ export async function main(ns) {
     let servers = []; // array that will hold the servers we get from the scan function
     let serverDataHeader = [['date time', 'pos.', 'scanned', 'hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'ramUsed', 
         'purchasedByPlayer', 'moneyAvailable', 'moneyMax', 'hackDifficulty', 
-        'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth', 'files', 'hackable']];
+        'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth', 'files', 'hackable', 'serverGrowth', 'Cores']];
 
     // if a server.txt file doesn't exist yet, we initialize it with the header row
     if (!ns.fileExists(serverDataFile)) {
@@ -143,6 +142,8 @@ export async function main(ns) {
         newServerData[15] = serverData[i][1].split('.').length - 1; // depth of the server in the network
         newServerData[16] = ns.ls(serverData[i][3]); // files on the server
         newServerData[17] = isHackable(server); // true if the server is hackable
+        newServerData[18] = server.serverGrowth; // server growth
+        newServerData[19] = server.cpuCores; // number of CPU cores
         
         serverData[i] = newServerData;
     }

@@ -188,7 +188,6 @@ export async function main(ns) {
                     row += headerRow[j].toString().padStart(columnLengths[j] + 2, ' ');
                 } else {
                     if (j === hostnameColumn) { // just for the hostname column (where we have tree + name) we want to align left
-                        // todo: somehow this line doesn't work as expected. The numbers are not aligned to the left but still to the right ... 
                         row += serverData[i][j].toString().padEnd(columnLengths[j] + 2, '_'); 
                     } else { // for all other columns we want to align everything to the right
                         row += serverData[i][j].toString().padStart(columnLengths[j] + 2, ' ');
