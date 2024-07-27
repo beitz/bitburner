@@ -1,6 +1,7 @@
+import os
 import pandas as pd
 import plotly.express as px
-import os
+import plotly.graph_objects as go
 
 # Get the directory of the current script and the data file
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -14,11 +15,41 @@ data = pd.read_csv(data_file_path, delimiter='|')
 # 'maxRam', 'ramUsed', 'purchasedByPlayer', 'moneyAvailable', 'moneyMax', 'hackDifficulty', 
 # 'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth', 'files', 'hackable'
 
-# Create a plot that does the following:
-# x-axis: 'date time'
-# y-axis: 'moneyAvailable'
-# series: 'hostname'
-fig = px.line(data, x='date time', y='moneyAvailable', color='hostname')
+# Get unique hostnames and sort them alphabetically
+sorted_hostnames = sorted(data['hostname'].unique())
+
+# Define the options for the dropdown menu
+y_axis_options = ['moneyAvailable', 'moneyMax', 'hasAdminRights', 'numOpenPortsRequired', 
+                  'maxRam', 'ramUsed', 'hackDifficulty', 'minDifficulty', 'currentHackingLevel', 
+                  'requiredHackingSkill']
+
+# Create the plot
+fig = px.line(data, x='date time', y='moneyAvailable', color='hostname', 
+              category_orders={'hostname': sorted_hostnames})
+
+# Create the dropdown menu
+updatemenus = [
+    {
+        'buttons': [
+            {
+                'method': 'update',
+                'label': y,
+                'args': [
+                    {'y': [data[data['hostname'] == hostname][y] for hostname in sorted_hostnames]},
+                    {'yaxis': {'title': y}}
+                ]
+            } for y in y_axis_options
+        ],
+        'direction': 'down',
+        'showactive': True,
+    }
+]
+
+# Update the layout to include the dropdown menu
+fig.update_layout(
+    updatemenus=updatemenus,
+    yaxis_title='moneyAvailable'  # Set the initial y-axis title
+)
 
 # Show the plot
 fig.show()
