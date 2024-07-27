@@ -15,6 +15,16 @@ export async function main(ns) {
     let securityThreshold = 0.05;
     let moneyAvailable = 0;
     let securityLevel = 0;
+    // some variables we could maybe use to optimize the script a bit by precisely calculating the thresholds
+    let growTime = ns.getGrowTime(target); // time in ms
+    let hackTime = ns.getHackTime(target); // time in ms
+    let mults = ns.getHackingMultipliers(); // contains info regarding multiplies. Multipliers are 1.5 for example (150% multiplier)
+    // mults.growth = hacking growth multiplier
+    // mults.chance = hacking chance multiplier
+    // mults.money  = stolen money multiplier
+    // mults.speed  = hacking speed multiplier
+
+
 
     // get initial values for those variables
     const maxMoney = ns.getServerMaxMoney(target); // maximum money available on server

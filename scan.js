@@ -8,6 +8,12 @@
 const serverDataFile = 'data/servers.txt';
 
 export async function main(ns) {
+    let log = false; 
+    if (ns.args[0] === 'log') {
+        // if we use the arg log, we're going to log the data in servers.txt
+        log = true;
+    }
+
     function getDateTime() { // Function that returns the current date and time as a string
         var now = new Date();
         var dateFormatted = now.toLocaleDateString(`sv`);
@@ -36,7 +42,7 @@ export async function main(ns) {
             ns.tprint(`Error: Data is not a 2d array. Data: ${data}`);
             return;
         }
-        ns.write(file, formattedData, 'a');
+        if (log) ns.write(file, formattedData, 'a');
     
         // we also write to a second file with a suffix in the file name that is not appended but overwritten
         const file_current = file.replace('.txt', '_current.txt');

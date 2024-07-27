@@ -25,7 +25,7 @@ export async function main(ns) {
 
     ns.tprint(`Starting periodic scan with interval of ${interval} seconds`);
     while (true) {
-        ns.run('scan.js');
+        ns.run('scan.js log');
         await ns.sleep(interval * 1000);
     }
 }
