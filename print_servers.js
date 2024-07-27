@@ -1,10 +1,9 @@
 /** @param {NS} ns **/
 
-// todo: replace the pos. with a tree like structure with those characters: └─, ├─, │, ┌, ┐, ┬, ┴, ─
+// todo: filter rows before building tree structure. also make sure we print the parent if we have children, even if it is filtered out
 
-// let printColumns = ['hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'moneyAvailable', 'moneyMax', 'requiredHackingSkill', 
-    // 'admin', 'ports', 'ram', 'money', 'max money', 'hack']; // added the shortened column names to the printColumns array as well so the printing at the end should work with either the full or the shortened names
-let printColumns = ['hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'moneyAvailable', 'moneyMax', 'requiredHackingSkill']; // added the shortened column names to the printColumns array as well so the printing at the end should work with either the full or the shortened names
+let printColumns = [];
+let filterColumns = [];
 
 export async function main(ns) {
     const file = "data/servers_current.txt";
@@ -13,7 +12,9 @@ export async function main(ns) {
     if (ns.args[0] === 'help') {
         ns.tprint("Usage: run print_servers.js <args>");
         ns.tprint("Arguments choose which columns to show. The following columns are available:");
-        ns.tprint("date time, pos., scanned, hostname, hasAdminRights, numOpenPortsRequired, maxRam, ramUsed, purchasedByPlayer, moneyAvailable, moneyMax, hackDifficulty, minDifficulty, currentHackingLevel, requiredHackingSkill, depth");
+        ns.tprint("date time, pos., scanned, hostname, hasAdminRights, numOpenPortsRequired, maxRam, " + 
+            "ramUsed, purchasedByPlayer, moneyAvailable, moneyMax, hackDifficulty, minDifficulty, " + 
+            "currentHackingLevel, requiredHackingSkill, depth, files");
         // todo: add the functionality to do some simple parsing for filtering as well
         //       e.g. "depth<5" to only show servers with a depth of less than 5
         //       e.g. "moneyAvailable>1e6" to only show servers with more than 1e6 money available
@@ -26,9 +27,18 @@ export async function main(ns) {
         for (let i = 0; i < ns.args.length; i++) {
             printColumns.push(ns.args[i]);
         }
+    } else {
+        printColumns = ['hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'moneyAvailable', 'moneyMax', 'requiredHackingSkill']; // default columns
     }
 
-    ns.tprint(printColumns);
+    // we go throught the filter column. If we find any args with an operator (e.g. > < >= <= == !=) we add them to 
+    //  the filterColumns array and remove the operator and value from the printColumns array
+    for (let i = 0; i < printColumns.length; i++) {
+        if (printColumns[i].includes(':')) {
+            filterColumns.push(printColumns[i]);
+            printColumns[i] = printColumns[i].split(":")[0];
+        }
+    }
 
     function readData(file) { // function to read the data from a file
         let serverData = [];
@@ -73,9 +83,6 @@ export async function main(ns) {
             } else if (serverData[i][j] === 'false' || serverData[i][j] === false) {
                 serverData[i][j] = " "; // alternative "✘"
             }
-            // if (serverData[0][j] === 'pos.') {
-            //     serverData[i][j] = serverData[i][j].toString().replace(/\./g, '');
-            // }
         }
     }
 
@@ -169,7 +176,7 @@ export async function main(ns) {
         }
     }
 
-    ns.tprint("Printing file: " + file);
+    ns.tprint("Printing file: " + file + " with the following columns: " + printColumns.join(', '));
 
     // Print data to terminal
     for (let i = 0; i < serverData.length-1; i++) { // rows
@@ -189,6 +196,25 @@ export async function main(ns) {
                 }
             }
         }
-        ns.tprint(row);
+
+        // some logic to determine if we should print the line or not
+        let print_line = true;
+        // we iterate through the list of all arguments that have one of the following operators: > < >= <= == != :
+        for (let k = 0; k < ns.args.length; k++) {
+            if (ns.args[k].includes(':')) { // for all arguments containing a : we check if the value is a boolean or not
+                let arg = ns.args[k].split(':');
+                let column = arg[0];
+                let argValue = arg[1];
+                let columnIndex = serverData[0].indexOf(column);
+                let serverValue = serverData[i][columnIndex];
+
+                if (argValue === 'true') {
+                    if (serverValue !== 'true' && serverValue !== '✔') print_line = false;
+                } else if (argValue === 'false') {
+                    if (serverValue !== 'false' && serverValue !== ' ') print_line = false;
+                }
+            }
+        }
+        if (print_line || i === 0) ns.tprint(row);
     }
 }

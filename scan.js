@@ -9,10 +9,7 @@ const serverDataFile = 'data/servers.txt';
 
 export async function main(ns) {
     let log = false; 
-    if (ns.args[0] === 'log') {
-        // if we use the arg log, we're going to log the data in servers.txt
-        log = true;
-    }
+    if (ns.args[0] === 'log') log = true; // we only log if the first argument is 'log'
 
     function getDateTime() { // Function that returns the current date and time as a string
         var now = new Date();
@@ -51,12 +48,34 @@ export async function main(ns) {
         ns.write(file_current, formattedData, 'w');
     }
 
+    function isHackable(server) { // function to determine if a server is hackable
+        // we determine the amountof ports we can open and how many open ports we need on target server
+        // we also determine the hack difficulty of the server and compare it to the player's hacking level
+        let openablePorts = 0;
+        if (ns.fileExists('BruteSSH.exe', 'home')) openablePorts++;
+        if (ns.fileExists('FTPCrack.exe', 'home')) openablePorts++;
+        if (ns.fileExists('relaySMTP.exe', 'home')) openablePorts++;
+        if (ns.fileExists('HTTPWorm.exe', 'home')) openablePorts++;
+        if (ns.fileExists('SQLInject.exe', 'home')) openablePorts++;
+
+        let openPortsRequired = server.numOpenPortsRequired;
+
+        let hackDifficulty = server.hackDifficulty;
+        let hackingLevel = ns.getHackingLevel();
+
+        if (openablePorts >= openPortsRequired && hackingLevel >= hackDifficulty) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     // ------------------ variables ------------------
     let serverData = []; // 2d array that will hold all the server data
     let servers = []; // array that will hold the servers we get from the scan function
     let serverDataHeader = [['date time', 'pos.', 'scanned', 'hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'ramUsed', 
         'purchasedByPlayer', 'moneyAvailable', 'moneyMax', 'hackDifficulty', 
-        'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth']];
+        'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth', 'files', 'hackable']];
 
     // if a server.txt file doesn't exist yet, we initialize it with the header row
     if (!ns.fileExists(serverDataFile)) {
@@ -122,7 +141,9 @@ export async function main(ns) {
         newServerData[13] = ns.getHackingLevel(); // current hacking level of the player
         newServerData[14] = server.requiredHackingSkill; // required hacking skill to hack the server
         newServerData[15] = serverData[i][1].split('.').length - 1; // depth of the server in the network
-
+        newServerData[16] = ns.ls(serverData[i][3]); // files on the server
+        newServerData[17] = isHackable(server); // true if the server is hackable
+        
         serverData[i] = newServerData;
     }
     

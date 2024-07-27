@@ -18,39 +18,67 @@
 
 const updateInterval = 1000 * 60; // 1 minute
 
+// todo: implement lots of functions from hack_all.js script in here. I want to manage everthing with this script here. 
+
+// todo: actually, changed my mind. Discard everything before this comment. This script will not run periodically, but only once with different arguments. 
+// arguments:
+//   (no arguments): prints help with argument descriptions and some general statistics and data
+//   nuke: nukes all servers (also opens ports and installs backdoors etc.)
+//   nuke target: nukes just the target server
+//   hack: hacks all servers
+//   hack target: hacks the target server
+//   hack target threads: hacks the target server with the given amount of threads
+//   kill: kills all scripts on all servers
+//   kill target: kills all scripts on target server
+//   scan: scans all servers and prints content on terminal
+
 export async function main(ns) {
-    while (true) {
-        // ------------------ update cycle ------------------
-        // we run all scripts that provide us with the data we need
-
-        // scan all servers with scan.js
-        ns.run('scan.js');
-
-        await ns.sleep(1000); // we wait a second, just in case
-
-        // ------------------ read cycle ------------------
-        // we read the data from the text files into variables, so we can use them. 
-
-        const data = await ns.read("servers.txt");
-        const serverData = JSON.parse(data);
-
-        await ns.sleep(1000); // we wait a second, just in case
-
-        // ------------------ run stuff based on data ------------------
+    // ------------------ variables ------------------
+    let scriptRam; // 
+    // todo: add variables for all the stuff we need to manage
 
 
 
-        // await ns.sleep(1000); // give the script some time before I try to access the file servers.txt
-        // looks like we don't need it after all. Maybe it's the "await ns.read()" that synchronizes the scripts? 
 
-        // // Read the result from the file
-        // const data = await ns.read("servers.txt");
-        // const servers = JSON.parse(data);
 
-        // ns.tprint("servers connected to 'home':");
-        // ns.tprint(servers);
 
-        // sleep for 10 seconds?
-        await ns.sleep(1000 * 10);
-    }
+
+
+
+
+
+    // old stuff
+    // while (true) {
+    //     // ------------------ update cycle ------------------
+    //     // we run all scripts that provide us with the data we need
+
+    //     // scan all servers with scan.js
+    //     ns.run('scan.js');
+
+    //     await ns.sleep(1000); // we wait a second, just in case
+
+    //     // ------------------ read cycle ------------------
+    //     // we read the data from the text files into variables, so we can use them. 
+
+    //     const data = await ns.read("servers.txt");
+    //     const serverData = JSON.parse(data);
+
+    //     await ns.sleep(1000); // we wait a second, just in case
+
+    //     // ------------------ run stuff based on data ------------------
+
+
+
+    //     // await ns.sleep(1000); // give the script some time before I try to access the file servers.txt
+    //     // looks like we don't need it after all. Maybe it's the "await ns.read()" that synchronizes the scripts? 
+
+    //     // // Read the result from the file
+    //     // const data = await ns.read("servers.txt");
+    //     // const servers = JSON.parse(data);
+
+    //     // ns.tprint("servers connected to 'home':");
+    //     // ns.tprint(servers);
+
+    //     await ns.sleep(1000 * 60 * 1); // sleep for 1 minute
+    // }
 }
