@@ -119,6 +119,11 @@ export async function main(ns) {
                     let maxRAM = server.maxRam;
                     let scriptRam = ns.getScriptRam(hack_file);
 
+                    if (maxRAM < scriptRam) {
+                        ns.tprint(`Not enough RAM on ${serverData[i][indexName]}`);
+                        continue;
+                    }
+
                     // we calculate the maximum number of threads we can run
                     let maxThreads = Math.floor(maxRAM / scriptRam);
                     // figure out by how much the server would grow if we would grow it and use it in conjunction with the threads etc. to determine the moneyThreshold

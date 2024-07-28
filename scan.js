@@ -74,7 +74,7 @@ export async function main(ns) {
     let servers = []; // array that will hold the servers we get from the scan function
     let serverDataHeader = [['date time', 'pos.', 'scanned', 'hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'ramUsed', 
         'purchasedByPlayer', 'moneyAvailable', 'moneyMax', 'hackDifficulty', 
-        'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth', 'files', 'hackable', 'serverGrowth', 'Cores']];
+        'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth', 'files', 'hackable', 'serverGrowth', 'Cores', 'moneyPercent']];
 
     // if a server.txt file doesn't exist yet, we initialize it with the header row
     if (!ns.fileExists(serverDataFile)) {
@@ -144,6 +144,7 @@ export async function main(ns) {
         newServerData[17] = isHackable(server); // true if the server is hackable
         newServerData[18] = server.serverGrowth; // server growth
         newServerData[19] = server.cpuCores; // number of CPU cores
+        newServerData[20] = server.moneyAvailable / server.moneyMax; // percentage of money available on the server
         
         serverData[i] = newServerData;
     }
