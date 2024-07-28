@@ -14,6 +14,7 @@ data = pd.read_csv(data_file_path, delimiter='|')
 # 'date time', 'pos.', 'scanned', 'hostname', 'hasAdminRights', 'numOpenPortsRequired', 
 # 'maxRam', 'ramUsed', 'purchasedByPlayer', 'moneyAvailable', 'moneyMax', 'hackDifficulty', 
 # 'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth', 'files', 'hackable'
+# 'serverGrowth', 'Cores', 'moneyPercent'
 
 # Get unique hostnames and sort them alphabetically
 sorted_hostnames = sorted(data['hostname'].unique())
@@ -21,7 +22,7 @@ sorted_hostnames = sorted(data['hostname'].unique())
 # Define the options for the dropdown menu
 y_axis_options = ['moneyAvailable', 'moneyMax', 'hasAdminRights', 'numOpenPortsRequired', 
                   'maxRam', 'ramUsed', 'hackDifficulty', 'minDifficulty', 'currentHackingLevel', 
-                  'requiredHackingSkill']
+                  'requiredHackingSkill', 'moneyPercent']
 
 # Create the plot
 fig = px.line(data, x='date time', y='moneyAvailable', color='hostname', 
