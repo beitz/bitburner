@@ -14,7 +14,8 @@ export async function main(ns) {
         ns.tprint("Arguments choose which columns to show. The following columns are available:");
         ns.tprint("date time, pos., scanned, hostname, hasAdminRights, numOpenPortsRequired, maxRam, " + 
             "ramUsed, purchasedByPlayer, moneyAvailable, moneyMax, hackDifficulty, minDifficulty, " + 
-            "currentHackingLevel, requiredHackingSkill, depth, files");
+            "currentHackingLevel, requiredHackingSkill, depth, files, hackable, serverGrowth, " +
+            "Cores, moneyPercent");
         // todo: add the functionality to do some simple parsing for filtering as well
         //       e.g. "depth<5" to only show servers with a depth of less than 5
         //       e.g. "moneyAvailable>1e6" to only show servers with more than 1e6 money available
@@ -28,7 +29,7 @@ export async function main(ns) {
             printColumns.push(ns.args[i]);
         }
     } else {
-        printColumns = ['hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'moneyAvailable', 'moneyMax', 'requiredHackingSkill']; // default columns
+        printColumns = ['hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'ramUsed', 'moneyMax', 'requiredHackingSkill', 'hackable']; // default columns
     }
 
     // we go throught the filter column. If we find any args with an operator (e.g. > < >= <= == !=) we add them to 
