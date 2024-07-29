@@ -1,9 +1,33 @@
 /** @param {NS} ns **/
 
 // todo: filter rows before building tree structure. also make sure we print the parent if we have children, even if it is filtered out
+// todo: maybe highlight the things we filtered out instead of filtering out everything else. This way we can still see the tree structure. 
 
 let printColumns = [];
 let filterColumns = [];
+let shortenedHeader = [
+    ['date time', 'time'],
+    ['pos.', 'pos.'],
+    ['scanned', 'scanned?'],
+    ['hostname', 'name'],
+    ['hasAdminRights', 'A'],
+    ['numOpenPortsRequired', 'P'],
+    ['maxRam', 'mRAM'],
+    ['ramUsed', 'RAM'],
+    ['purchasedByPlayer', 'purchased?'],
+    ['moneyAvailable', '$'],
+    ['moneyMax', 'max $'],
+    ['hackDifficulty', 'security'],
+    ['minDifficulty', 'min security'],
+    ['currentHackingLevel', 'hack lvl'],
+    ['requiredHackingSkill', 'req. hack lvl'],
+    ['depth', 'depth'],
+    ['files', 'files'],
+    ['hackable', 'hackable?'],
+    ['serverGrowth', 'serverGrowth'],
+    ['Cores', 'Cores'],
+    ['moneyPercent', 'money%']
+];
 
 export async function main(ns) {
     const file = "data/servers_current.txt";
@@ -68,6 +92,19 @@ export async function main(ns) {
         return value;
     }
 
+    function shortenHeader(header, shortenedHeader) {
+        // header: string with the name of the column in its original version
+        // shortenedHeader: 2d array with long and short names for the columns
+        // function looks if the header is in the shortenedHeader array and returns the short name if it is, else it returns the original name
+        for (let i = 0; i < shortenedHeader.length; i++) {
+            if (header === shortenedHeader[i][0]) {
+                return shortenedHeader[i][1];
+            } else {
+                return header;
+            }
+        }
+    }
+
     // Get the server data from the file
     let serverData = readData(file);
 
@@ -128,36 +165,36 @@ export async function main(ns) {
         serverData[i][hostnameColumn] = tree + serverData[i][hostnameColumn];
     }
 
-    // we change the name of some of the headings of the header row to shorten the names
-    let headerRow = serverData[0];
-    for (let i = 0; i < headerRow.length; i++) {
-        switch (headerRow[i]) {
-            case 'hasAdminRights':
-                headerRow[i] = 'A';
-                if (printColumns.includes('hasAdminRights')) printColumns.push('A');
-                break;
-            case 'numOpenPortsRequired':
-                headerRow[i] = 'P';
-                if (printColumns.includes('numOpenPortsRequired')) printColumns.push('P');
-                break;
-            case 'maxRam':
-                headerRow[i] = 'ram';
-                if (printColumns.includes('maxRam')) printColumns.push('ram');
-                break;
-            case 'moneyAvailable':
-                headerRow[i] = 'money';
-                if (printColumns.includes('moneyAvailable')) printColumns.push('money');
-                break;
-            case 'moneyMax':
-                headerRow[i] = 'max money';
-                if (printColumns.includes('moneyMax')) printColumns.push('max money');
-                break;
-            case 'requiredHackingSkill':
-                headerRow[i] = 'hack';
-                if (printColumns.includes('requiredHackingSkill')) printColumns.push('hack');
-                break;
-        }
-    }
+    // // we change the name of some of the headings of the header row to shorten the names
+    // let headerRow = serverData[0];
+    // for (let i = 0; i < headerRow.length; i++) {
+    //     switch (headerRow[i]) {
+    //         case 'hasAdminRights':
+    //             headerRow[i] = 'A';
+    //             if (printColumns.includes('hasAdminRights')) printColumns.push('A');
+    //             break;
+    //         case 'numOpenPortsRequired':
+    //             headerRow[i] = 'P';
+    //             if (printColumns.includes('numOpenPortsRequired')) printColumns.push('P');
+    //             break;
+    //         case 'maxRam':
+    //             headerRow[i] = 'ram';
+    //             if (printColumns.includes('maxRam')) printColumns.push('ram');
+    //             break;
+    //         case 'moneyAvailable':
+    //             headerRow[i] = 'money';
+    //             if (printColumns.includes('moneyAvailable')) printColumns.push('money');
+    //             break;
+    //         case 'moneyMax':
+    //             headerRow[i] = 'max money';
+    //             if (printColumns.includes('moneyMax')) printColumns.push('max money');
+    //             break;
+    //         case 'requiredHackingSkill':
+    //             headerRow[i] = 'hack';
+    //             if (printColumns.includes('requiredHackingSkill')) printColumns.push('hack');
+    //             break;
+    //     }
+    // }
 
     // We determine the max length of each column
     let columnLengths = [];
@@ -170,10 +207,10 @@ export async function main(ns) {
             }
         }
     }
-    // now we check the header row as well
-    for (let i = 0; i < headerRow.length; i++) {
-        if (headerRow[i].length > columnLengths[i]) {
-            columnLengths[i] = headerRow[i].length;
+    // now we check the header row as well, but with the data from the shortened header
+    for (let i = 0; i < shortenedHeader.length; i++) {
+        if (shortenedHeader[i][1].length > columnLengths[i]) {
+            columnLengths[i] = shortenedHeader[i][1].length;
         }
     }
 
@@ -185,8 +222,8 @@ export async function main(ns) {
         for (let j = 0; j < serverData[0].length; j++) { // columns
             // if the current column is included in the printColumns array, we print it. else we skip it
             if (printColumns.includes(serverData[0][j])) {
-                if (i === 0) { // for the header row we print the header row
-                    row += headerRow[j].toString().padStart(columnLengths[j] + 2, ' ');
+                if (i === 0) { // for the header row we print the header row, but with the shortened headers
+                    row += shortenedHeader[j][1].toString().padStart(columnLengths[j] + 2, ' ');
                 } else {
                     if (j === hostnameColumn) { // just for the hostname column (where we have tree + name) we want to align left
                         row += serverData[i][j].toString().padEnd(columnLengths[j] + 2, '_'); 

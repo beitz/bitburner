@@ -74,7 +74,7 @@ export async function main(ns) {
     let servers = []; // array that will hold the servers we get from the scan function
     let serverDataHeader = [['date time', 'pos.', 'scanned', 'hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'ramUsed', 
         'purchasedByPlayer', 'moneyAvailable', 'moneyMax', 'hackDifficulty', 
-        'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth', 'files', 'hackable', 'serverGrowth', 'Cores', 'moneyPercent']];
+        'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth', 'files', 'hackable', 'serverGrowth', 'Cores', 'moneyPercent', 'serverValue']];
 
     // if a server.txt file doesn't exist yet, we initialize it with the header row
     if (!ns.fileExists(serverDataFile)) {
@@ -120,6 +120,8 @@ export async function main(ns) {
             break; // if there is no server left to scan, we break out of the while loop
         }
     }
+    // we add the 'home' server to the top of the serverData array
+    serverData.unshift([getDateTime(), '0', true, 'home']);
 
     // now we should have the serverData array filled with all the servers in the network, including the date time, position, scanned and name
 
@@ -146,6 +148,7 @@ export async function main(ns) {
         newServerData[18] = server.serverGrowth; // server growth
         newServerData[19] = server.cpuCores; // number of CPU cores
         newServerData[20] = server.moneyAvailable / server.moneyMax; // percentage of money available on the server
+        newServerData[21] = server.moneyMax / server.minDifficulty * server.cpuCores * server.serverGrowth / 1000000000; // value of the server calculated by arbitrary formula that I just came up with
         
         serverData[i] = newServerData;
     }
