@@ -16,11 +16,9 @@ Here are some of my personal scripts for Bitburner that I wrote using NS2.
 | test.js | never done | Script I use for testing stuff. |
 |  |  |  |
 
-Scripts for hacking on remote servers with hack/grow/weaken running in parallel
-| File | Status | Description |
-| --- | --- | --- |
-| remote.js | wip | Calculates the optimal timing and threads of hack/grow/weaken and executes those scripts in a loop |
-| r_hack.js | done |  |
-| r_weaken.js | done |  |
-| r_grow.js | done |  |
-|  |  |  |
+## Current workflow
+
+1. start scanning with `periodic_scan.js`
+1. run `hack_all.js nuke` to nuke what we can, then run `hack_all.js hack` to start hacking
+1. rerun `hack_all.js` from time to time to hack more
+1. 
