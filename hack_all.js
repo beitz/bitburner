@@ -120,7 +120,7 @@ export async function main(ns) {
                     let scriptRam = ns.getScriptRam(hack_file);
 
                     if (maxRAM < scriptRam) {
-                        ns.tprint(`Not enough RAM on ${serverData[i][indexName]}`);
+                        // ns.tprint(`Not enough RAM on ${serverData[i][indexName]}`);
                         continue;
                     }
 

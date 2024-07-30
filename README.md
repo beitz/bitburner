@@ -13,6 +13,7 @@ Here are some of my personal scripts for Bitburner that I wrote using NS2.
 | purchase_hacknet.js | todo | Used to purchase and upgrade hacknet nodes |
 | scan.js | done | Used to scan the network and log useful server data into a file. |
 | test.js | never done | Script I use for testing stuff. |
+| connect.js | done | script that lets us connect quickly to any server in the entire network. |
 |  |  |  |
 
 Not used anymore
