@@ -82,11 +82,11 @@ export async function main(ns) {
         // we run all scripts that provide us with the data we need
 
         ns.run('scan.js'); // scan all servers with scan.js to update the `servers_current.txt` file
-        await ns.sleep(100); // wait for scan.js to finish
+        await ns.sleep(1000); // wait for scan.js to finish
         ns.exec("hack_all.js", "home", 1, "nuke"); // nuke all servers
-        await ns.sleep(100); // wait for scan.js to finish
+        await ns.sleep(1000); // wait for scan.js to finish
         ns.run('scan.js'); // scan all servers again to see if we have any new hackable servers
-        await ns.sleep(100); // wait for scan.js to finish
+        await ns.sleep(1000); // wait for scan.js to finish
 
         let serverData = readData(ns, servers_file); // 2d array that will hold all the server data
         // get the indexes of the following column headers so we can address them by name
@@ -104,20 +104,10 @@ export async function main(ns) {
         for (let i = 1; i < serverData.length; i++) {
             // we divide the available ram on the server by the ram required of the hack script and floor the value. 
             // this is to prevent us calculating with the unusable, tiny last portion of ram on each server
-            for (let j = 0; j < serverData[i].length; j++) {
-                if (serverData[0][j] === 'purchasedByPlayer' && serverData[i][j] === 'true') {
-                    totalRunnableThreads += Math.floor(ns.getServerMaxRam(serverData[i][index_hostname]) / script_ram); // todo: test this with purchased servers. Don't have purchased servers atm. to test. 
-                }
+            if (serverData[i][index_purchasedByPlayer] === true) {
+                totalRunnableThreads += Math.floor((serverData[i][index_maxRam] - 0) / script_ram); // 0 gb for other random scripts reserved
             }
         }
-
-
-
-        // todo: CHECK IF THIS WORKS. I think the calculation for the totalRunnableThreads might be off. 
-
-
-
-
 
         // we take the top 10 most valuable servers and assign the value as a percentage of the total value of those top 10 servers to a new column
         // to do this we first sum the total value of those top 10 servers
@@ -175,7 +165,7 @@ export async function main(ns) {
         let remainingThreads = totalThreads;
         let i_h = toHackServers.length - 1; // start with the last server. index of the toHackServers array
         let purchasedServers = serverData.slice(1).filter(server => server[index_purchasedByPlayer] === true); // we build a new array with only our purchased servers
-        let i_p = 0; // start with 'home'. index of the purchasedServers array
+        let i_p = 1; // start with 'home'. index of the purchasedServers array
 
         // we add the header to the purchasedServers array
         purchasedServers.unshift(serverData[0]);
@@ -185,28 +175,45 @@ export async function main(ns) {
         for (let i = 1; i < purchasedServers.length; i++) {
             purchasedServers[i].push(''); // add a new column to the end of the array for percentageValue
             purchasedServers[i].push(Math.floor((purchasedServers[i][index_maxRam] - 0) / script_ram)); // 0 gb for other random scripts reserved
+
+            // while we're at it, let's remove the hack script from the server and copy a new version of it to the server
+            // skip 'home' as we don't want to remove the hack script from there
+            if (purchasedServers[i][index_hostname] !== 'home') {
+                ns.rm(hack_file, purchasedServers[i][index_hostname]);
+                ns.scp(hack_file, purchasedServers[i][index_hostname]);
+            }
         }
 
         let counter = 1; // counter to prevent infinite loops
         while (remainingThreads > 0) {
             // if the current purchased server has enough threads available, we run the hack script on it with the given amount of threads
             // if not, we run the hack script with as many threads as possible and the next server can use the remaining threads
-            ns.tprint(`${counter} remaining threads: ${remainingThreads}, purchased server: ${purchasedServers[i_p][index_hostname]}, threads: ${purchasedServers[i_p][indexThreadsPurchasedServers]}, to hack server: ${toHackServers[i_h][index_hostname]}, threads: ${toHackServers[i_h][index_threads]}`);
             if (purchasedServers[i_p][indexThreadsPurchasedServers] > toHackServers[i_h][index_threads]) {
-                ns.tprint(`running hack script on ${purchasedServers[i_p][index_hostname]} with ${toHackServers[i_h][index_threads]} threads`);
-                ns.exec(hack_file, purchasedServers[i_p][index_hostname], toHackServers[i_h][index_threads], toHackServers[i_h][index_threads], toHackServers[i_h][index_hostname]);
-                purchasedServers[i_p][indexThreadsPurchasedServers] -= toHackServers[i_h][index_threads];
-                remainingThreads -= toHackServers[i_h][index_threads];
+                if (toHackServers[i_h][index_threads] > 0) { // only if threads are > 0 we run the hack script
+                    ns.tprint(`running hack script on ${purchasedServers[i_p][index_hostname]} with ${toHackServers[i_h][index_threads]} threads on ${toHackServers[i_h][index_hostname]}`);
+                    ns.exec(hack_file, purchasedServers[i_p][index_hostname], toHackServers[i_h][index_threads], toHackServers[i_h][index_threads], toHackServers[i_h][index_hostname]);
+                    purchasedServers[i_p][indexThreadsPurchasedServers] -= toHackServers[i_h][index_threads];
+                    remainingThreads -= toHackServers[i_h][index_threads];
+                }
+                i_h--; // go to the next toHackServer
             } else {
-                ns.tprint(`running hack script on ${purchasedServers[i_p][index_hostname]} with ${purchasedServers[i_p][indexThreadsPurchasedServers]} threads`);   
-                // determine how many threads we can run on the current server
-                ns.exec(hack_file, purchasedServers[i_p][index_hostname], purchasedServers[i_p][indexThreadsPurchasedServers], purchasedServers[i_p][indexThreadsPurchasedServers], toHackServers[i_h][index_hostname]);
-                toHackServers[i_h][index_threads] -= purchasedServers[i_p][indexThreadsPurchasedServers];
-                remainingThreads -= purchasedServers[i_p][indexThreadsPurchasedServers];
+                if (purchasedServers[i_p][indexThreadsPurchasedServers] > 0) { // only if threads are > 0 we run the hack script
+                    ns.tprint(`running hack script on ${purchasedServers[i_p][index_hostname]} with ${toHackServers[i_h][index_threads]} threads on ${toHackServers[i_h][index_hostname]}`);
+                    ns.exec(hack_file, purchasedServers[i_p][index_hostname], purchasedServers[i_p][indexThreadsPurchasedServers], purchasedServers[i_p][indexThreadsPurchasedServers], toHackServers[i_h][index_hostname]);
+                    toHackServers[i_h][index_threads] -= purchasedServers[i_p][indexThreadsPurchasedServers];
+                    remainingThreads -= purchasedServers[i_p][indexThreadsPurchasedServers];
+                }
+                i_p++; // go to the next purchasedServer
             }
             counter++;
             if (counter > 1000) {
                 ns.tprint("counter exceeded 1000. breaking loop");
+                break;
+            }
+            // todo: figure out why we have a little bit left over. starting with what 300.000 + threads we get to the point where we break with 1438 left. 
+            //       I'm guessing it's a rounding error or something like that. This here should be good enough for now. 
+            if (i_p >= purchasedServers.length) {
+                ns.tprint("i_p exceeded purchasedServers.length. breaking loop. remaining threads: " + remainingThreads);
                 break;
             }
         }
