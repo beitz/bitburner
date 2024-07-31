@@ -12,6 +12,9 @@
 // renamePurchasedServer(hostname, newName)	Rename a purchased server.
 // upgradePurchasedServer(hostname, ram)	Upgrade a purchased server's RAM.
 
+// todo: first buy until we have max servers, then upgrade all servers to max ram
+//       rewrite this script to automatically do this so we can just call it periodically to get fully upgraded servers eventually
+
 export async function main(ns) {
     // ------------------ functions ------------------
     function readData(file) { // function to read the data from a file
@@ -42,8 +45,8 @@ export async function main(ns) {
     }
 
     // ------------------ variables ------------------
-    const file = "data/servers_current.txt";
-    let serverData = await readData(file);
+    // const file = "data/servers_current.txt";
+    // let serverData = await readData(file);
 
     if (ns.args.length === 0) {
         ns.tprint("Usage: run purchase_server.js <args>");
@@ -55,25 +58,52 @@ export async function main(ns) {
     }
 
     // get index of the following column headers: 'hostname', 'maxRam', 'purchasedByPlayer'
-    let index_hostname = serverData[0].indexOf('hostname');
-    let index_maxRam = serverData[0].indexOf('maxRam');
-    let index_purchasedByPlayer = serverData[0].indexOf('purchasedByPlayer');
+    // let index_hostname = serverData[0].indexOf('hostname');
+    // let index_maxRam = serverData[0].indexOf('maxRam');
+    // let index_purchasedByPlayer = serverData[0].indexOf('purchasedByPlayer');
+    // let index_usedRam = serverData[0].indexOf('ramUsed');
+    let purchasedServers = ns.getPurchasedServers();
+    let purchasedServerPrefix = 'purchased-server-';
 
     // ------------------ main ------------------
-    if (ns.args[0] === 'list') {
-        for (let i = 1; i < serverData.length; i++) {
-            if (serverData[i][index_purchasedByPlayer] === 'true') {
-                ns.tprint(`${serverData[i][index_hostname]}: ${serverData[i][index_maxRam]}`);
-            }
+    if (ns.args[0] === 'list') { // list our purchased servers: name, max ram, used ram
+        for (let i = 0; i < purchasedServers.length; i++) {
+            let server = ns.getServer(purchasedServers[i]);
+            ns.tprint(`${server.hostname}: ${server.ramUsed}/${server.maxRam}`);
         }
     } else if (ns.args[0] === 'purchase') {
         // todo: figure out the biggest server we can buy and buy it
+        let maxServers = ns.getPurchasedServerLimit();
+        let currentServers = purchasedServers.length;
+        if (currentServers >= maxServers) {
+            ns.tprint("Already at max servers");
+            return;
+        }
 
-        
+        let moneySpendFactor = ns.args[1] || 0.9; // by default we spend 90% of our money to make sure we have at least some left
+        let availableMoney = ns.getServerMoneyAvailable('home');
+        let budget = availableMoney * moneySpendFactor;
+        let maxRam = ns.getPurchasedServerMaxRam(); // should always be a factor of 2
+        let minRam = 128; // smallest server we will allow to be bought
+        let purchaseRAM = maxRam; // the amount of RAM we attempt to purchase
+        let minCost = ns.getPurchasedServerCost(minRam); // smallest server we will buy will be 4 gb
 
-
+        while (budget > minCost) { // we try to buy as many servers as we can
+            while (purchaseRAM >= minRam) { // we try to buy the biggest server we can
+                let cost = ns.getPurchasedServerCost(purchaseRAM);
+                if (cost <= budget) {
+                    ns.purchaseServer(purchasedServerPrefix + currentServers, purchaseRAM);
+                    ns.tprint(`Bought: ${purchasedServerPrefix}${currentServers} with ${purchaseRAM} RAM for ${cost}`);
+                    budget -= cost;
+                    currentServers++;
+                    break;
+                }
+                purchaseRAM /= 2;
+            }
+        }
     } else if (ns.args[0] === 'upgrade') {
         // todo: upgrade all servers to the max ram we can buy
+        //       maybe also use factor for money to only spenx x% of our money
     } else {
         ns.tprint("Usage: run purchase_server.js <args>");
         ns.tprint("Args:");

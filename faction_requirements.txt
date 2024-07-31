@@ -1,0 +1,30 @@
+Short overview of the factions and the requirements to unlock them
+
+# Location specific factions
+Sector-12
+- Located in Sector-12
+- Have $1.5e7
+
+Aevum
+- Located in Aevum
+- Have $4e7
+
+# Story factions
+CyberSec
+- Backdoor Access to CSEC server
+
+NiteSec
+- Backdoor access to avmnite-02h server
+
+The Black Hand
+- Backdoor access to I.I.I.I server
+
+BitRunners
+- Backdoor access to urn4theh111z server
+
+# Other factions
+Netburners
+- Hacking level 80
+- Total Hacknet RAM of 8 GB
+- Total Hacknet cores of 4
+- Total Hacknet levels of 100

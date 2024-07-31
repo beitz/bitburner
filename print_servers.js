@@ -165,37 +165,6 @@ export async function main(ns) {
         serverData[i][hostnameColumn] = tree + serverData[i][hostnameColumn];
     }
 
-    // // we change the name of some of the headings of the header row to shorten the names
-    // let headerRow = serverData[0];
-    // for (let i = 0; i < headerRow.length; i++) {
-    //     switch (headerRow[i]) {
-    //         case 'hasAdminRights':
-    //             headerRow[i] = 'A';
-    //             if (printColumns.includes('hasAdminRights')) printColumns.push('A');
-    //             break;
-    //         case 'numOpenPortsRequired':
-    //             headerRow[i] = 'P';
-    //             if (printColumns.includes('numOpenPortsRequired')) printColumns.push('P');
-    //             break;
-    //         case 'maxRam':
-    //             headerRow[i] = 'ram';
-    //             if (printColumns.includes('maxRam')) printColumns.push('ram');
-    //             break;
-    //         case 'moneyAvailable':
-    //             headerRow[i] = 'money';
-    //             if (printColumns.includes('moneyAvailable')) printColumns.push('money');
-    //             break;
-    //         case 'moneyMax':
-    //             headerRow[i] = 'max money';
-    //             if (printColumns.includes('moneyMax')) printColumns.push('max money');
-    //             break;
-    //         case 'requiredHackingSkill':
-    //             headerRow[i] = 'hack';
-    //             if (printColumns.includes('requiredHackingSkill')) printColumns.push('hack');
-    //             break;
-    //     }
-    // }
-
     // We determine the max length of each column
     let columnLengths = [];
     for (let i = 1; i < serverData.length-1; i++) { // rows (last row should always be empty, that's why we skip it. We also skip the first row, because it's the header row)

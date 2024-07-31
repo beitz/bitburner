@@ -136,7 +136,7 @@ export async function main(ns) {
         newServerData[6] = server.maxRam; // max ram of the server
         newServerData[7] = server.ramUsed; // ram used by the server
         newServerData[8] = server.purchasedByPlayer; // true if the player has purchased the server
-        newServerData[9] = server.moneyAvailable; // money that is currently on the server
+        newServerData[9] = (hostname === 'home') ? ns.getServerMoneyAvailable('home') : server.moneyAvailable; // money that is currently on the server
         newServerData[10] = server.moneyMax; // maximum money on the server
         newServerData[11] = server.hackDifficulty; // security level of the server
         newServerData[12] = server.minDifficulty; // minimum security level
