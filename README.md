@@ -15,6 +15,7 @@ Here are some of my personal scripts for Bitburner that I wrote using NS2.
 | scan.js | done | Used to scan the network and log useful server data into a file. |
 | test.js | never done | Script I use for testing stuff. |
 | connect.js | done | script that lets us connect quickly to any server in the entire network. |
+| contracts.js | wip | list or do all kinds of contracts that can be found on all the servers. |
 |  |  |  |
 
 Not used anymore
@@ -27,10 +28,19 @@ Not used anymore
 
 ## Current workflow
 
-1. start scanning with `periodic_scan.js`
-1. run `manager.js`. This should take care of everything unless I forgot about something. 
+1. just run `manager.js`. This should take care of everything unless I forgot about something. 
+    - will start periodic_scan.js if it isn't running already to create a log file for all servers and a lot of their stats. 
     - will periodically (currently every 1 hour) run several scripts. 
-    - scans the network and updates the servers.txt file that stores the server relevant data
-    - determines how to distribute the available ram on purchased servers and home server and hacks those servers that are hackable in the network
-    - automatically nukes them
+    - scans the network and updates the servers_current.txt file that stores the server relevant data
+    - determines how to distribute the available ram on purchased servers and home server and hacks hackable target servers in the network
+    - also automatically nukes them and opens ports
 1. create programs to open ports whenever available
+1. grind faction reputation to purchase augmentations when possible
+
+This way we will purchase servers with our money each hour. 
+We will use the RAM on those servers + home server to hack all kinds of hackable targets in the network. 
+Each hour we will scan the network again, kill all scripts and start hacking again with a new RAM distribution. 
+Sometimes we'll have to `connect.js` to a specific server in the network to install a backdoor and gain a faction invitation. 
+Then we'll do work for that faction to gain reputation and buy their augmentations. 
+We install the augmentations. 
+rinse and repeat. 

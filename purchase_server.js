@@ -2,52 +2,11 @@
 
 // script used to purchase servers
 
-// available functions:
-// getPurchasedServerCost(ram)	Get cost of purchasing a server.
-// getPurchasedServerLimit()	Returns the maximum number of servers you can purchase.
-// getPurchasedServerMaxRam()	Returns the maximum RAM that a purchased server can have.
-// getPurchasedServers()	Returns an array with the hostnames of all of the servers you have purchased.
-// getPurchasedServerUpgradeCost(hostname, ram)	Get cost of upgrading a purchased server to the given ram.
-// purchaseServer(hostname, ram)	Purchase a server.
-// renamePurchasedServer(hostname, newName)	Rename a purchased server.
-// upgradePurchasedServer(hostname, ram)	Upgrade a purchased server's RAM.
-
 // todo: first buy until we have max servers, then upgrade all servers to max ram
 //       rewrite this script to automatically do this so we can just call it periodically to get fully upgraded servers eventually
 
 export async function main(ns) {
-    // ------------------ functions ------------------
-    function readData(file) { // function to read the data from a file
-        let serverData = [];
-        const data = ns.read(file);
-
-        for (let line of data.split('\n')) {
-            serverData.push(line.split('|').map(parseValue));
-        }
-
-        return serverData;
-    }
-
-    function parseValue(value) { // function to parse the value to the correct type
-        // Try to parse as float
-        if (!isNaN(value) && value.trim() !== '') {
-            return parseFloat(value);
-        }
-        // Check for boolean values
-        if (value.toLowerCase() === 'true') {
-            return true;
-        }
-        if (value.toLowerCase() === 'false') {
-            return false;
-        }
-        // Return the original string if no conversion is possible
-        return value;
-    }
-
     // ------------------ variables ------------------
-    // const file = "data/servers_current.txt";
-    // let serverData = await readData(file);
-
     if (ns.args.length === 0) {
         ns.tprint("Usage: run purchase_server.js <args>");
         ns.tprint("Args:");
@@ -57,11 +16,6 @@ export async function main(ns) {
         return;
     }
 
-    // get index of the following column headers: 'hostname', 'maxRam', 'purchasedByPlayer'
-    // let index_hostname = serverData[0].indexOf('hostname');
-    // let index_maxRam = serverData[0].indexOf('maxRam');
-    // let index_purchasedByPlayer = serverData[0].indexOf('purchasedByPlayer');
-    // let index_usedRam = serverData[0].indexOf('ramUsed');
     let purchasedServers = ns.getPurchasedServers();
     let purchasedServerPrefix = 'purchased-server-';
 
@@ -102,8 +56,34 @@ export async function main(ns) {
             }
         }
     } else if (ns.args[0] === 'upgrade') {
-        // todo: upgrade all servers to the max ram we can buy
-        //       maybe also use factor for money to only spenx x% of our money
+        let upgradeBudget = ns.getServerMoneyAvailable('home') * 0.9; // we spend at most 90% of our money on upgrades
+        let maxRam = ns.getPurchasedServerMaxRam();
+        let upgradeRam = maxRam;
+
+        for (let i = 0; i < purchasedServers.length; i++) {
+            let server = ns.getServer(purchasedServers[i]);
+            let currentRam = server.maxRam;
+            if (currentRam === maxRam) { // we can skip servers that are already at max ram
+                continue;
+            }
+            let upgradeCost = ns.getPurchasedServerUpgradeCost(server.hostname, maxRam);
+
+            // ns.tprint(`server: ${server.hostname}, current ram: ${currentRam}, upgrade cost: ${upgradeCost}, upgrade budget: ${upgradeBudget}`);
+            
+            // a few scenarios:
+            // 1. we have enough budget to upgrade the server to max. so we do. 
+            // 2. we don't have enough budget. so we go into a loop and try again with 1/2 ram until we can upgrade or we reach the minimum ram
+            while (upgradeCost > upgradeBudget && upgradeRam > 128) {
+                upgradeRam /= 2;
+                upgradeCost = ns.getPurchasedServerUpgradeCost(server.hostname, currentRam);
+                // ns.tprint(`reducing upgrade ram to ${upgradeRam} and cost to ${upgradeCost}`);
+            }
+            if (upgradeCost <= upgradeBudget && upgradeRam > currentRam) {
+                ns.upgradePurchasedServer(server.hostname, upgradeRam);
+                // ns.tprint(`Upgraded: ${server.hostname} to ${upgradeRam} RAM for ${upgradeCost}`);
+                upgradeBudget -= upgradeCost;
+            }
+        }
     } else {
         ns.tprint("Usage: run purchase_server.js <args>");
         ns.tprint("Args:");

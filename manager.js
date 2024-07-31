@@ -87,6 +87,9 @@ export async function main(ns) {
         await ns.sleep(10); // wait for scan.js to finish
         ns.run('scan.js'); // scan all servers again to see if we have any new hackable servers
         await ns.sleep(10); // wait for scan.js to finish
+        
+        ns.run('purchase_server.js', 1, 'purchase'); // purchase servers
+        ns.run('purchase_server.js', 1, 'upgrade'); // upgrade servers
 
         let serverData = readData(ns, servers_file); // 2d array that will hold all the server data
         // get the indexes of the following column headers so we can address them by name
@@ -97,7 +100,7 @@ export async function main(ns) {
         let index_serverValue = serverData[0].indexOf('serverValue');
         let index_maxRam = serverData[0].indexOf('maxRam');
 
-        // ------------------ do some logic and execute scripts ------------------
+        // ------------------ do some logic and execute scripts to start hacking from our purchased servers ------------------
 
         // let's go add up all the ram that we have available to us first on our home server (-20 gb for other random scripts) and all the purchased servers
         let totalRunnableThreads = Math.floor((ns.getServerMaxRam('home') - 24) / script_ram); // 24 gb for other random scripts
@@ -224,9 +227,6 @@ export async function main(ns) {
         ns.exec("hack_all.js", "home", 1, "hack"); // hack all servers
         await ns.sleep(500); // wait a bit ...
         ns.exec("hack_all.js", "home", 1, "hack"); // ... and do it again. Sometimes it seems it only worked after the second time. In any case, this should not hurt. 
-
-        ns.run('purchase_server.js', 1, 'purchase'); // purchase servers
-        ns.run('purchase_server.js', 1, 'upgrade'); // upgrade servers
 
         await ns.sleep(updateInterval); // wait until the next update cycle
     }
