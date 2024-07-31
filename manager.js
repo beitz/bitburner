@@ -82,11 +82,11 @@ export async function main(ns) {
         // we run all scripts that provide us with the data we need
 
         ns.run('scan.js'); // scan all servers with scan.js to update the `servers_current.txt` file
-        await ns.sleep(1000); // wait for scan.js to finish
+        await ns.sleep(10); // wait for scan.js to finish
         ns.exec("hack_all.js", "home", 1, "nuke"); // nuke all servers
-        await ns.sleep(1000); // wait for scan.js to finish
+        await ns.sleep(10); // wait for scan.js to finish
         ns.run('scan.js'); // scan all servers again to see if we have any new hackable servers
-        await ns.sleep(1000); // wait for scan.js to finish
+        await ns.sleep(10); // wait for scan.js to finish
 
         let serverData = readData(ns, servers_file); // 2d array that will hold all the server data
         // get the indexes of the following column headers so we can address them by name
@@ -190,7 +190,7 @@ export async function main(ns) {
             // if not, we run the hack script with as many threads as possible and the next server can use the remaining threads
             if (purchasedServers[i_p][indexThreadsPurchasedServers] > toHackServers[i_h][index_threads]) {
                 if (toHackServers[i_h][index_threads] > 0) { // only if threads are > 0 we run the hack script
-                    ns.tprint(`running hack script on ${purchasedServers[i_p][index_hostname]} with ${toHackServers[i_h][index_threads]} threads on ${toHackServers[i_h][index_hostname]}`);
+                    // ns.tprint(`running hack script on ${purchasedServers[i_p][index_hostname]} with ${toHackServers[i_h][index_threads]} threads on ${toHackServers[i_h][index_hostname]}`);
                     ns.exec(hack_file, purchasedServers[i_p][index_hostname], toHackServers[i_h][index_threads], toHackServers[i_h][index_threads], toHackServers[i_h][index_hostname]);
                     purchasedServers[i_p][indexThreadsPurchasedServers] -= toHackServers[i_h][index_threads];
                     remainingThreads -= toHackServers[i_h][index_threads];
@@ -198,7 +198,7 @@ export async function main(ns) {
                 i_h--; // go to the next toHackServer
             } else {
                 if (purchasedServers[i_p][indexThreadsPurchasedServers] > 0) { // only if threads are > 0 we run the hack script
-                    ns.tprint(`running hack script on ${purchasedServers[i_p][index_hostname]} with ${toHackServers[i_h][index_threads]} threads on ${toHackServers[i_h][index_hostname]}`);
+                    // ns.tprint(`running hack script on ${purchasedServers[i_p][index_hostname]} with ${toHackServers[i_h][index_threads]} threads on ${toHackServers[i_h][index_hostname]}`);
                     ns.exec(hack_file, purchasedServers[i_p][index_hostname], purchasedServers[i_p][indexThreadsPurchasedServers], purchasedServers[i_p][indexThreadsPurchasedServers], toHackServers[i_h][index_hostname]);
                     toHackServers[i_h][index_threads] -= purchasedServers[i_p][indexThreadsPurchasedServers];
                     remainingThreads -= purchasedServers[i_p][indexThreadsPurchasedServers];
@@ -213,19 +213,20 @@ export async function main(ns) {
             // todo: figure out why we have a little bit left over. starting with what 300.000 + threads we get to the point where we break with 1438 left. 
             //       I'm guessing it's a rounding error or something like that. This here should be good enough for now. 
             if (i_p >= purchasedServers.length) {
-                ns.tprint("i_p exceeded purchasedServers.length. breaking loop. remaining threads: " + remainingThreads);
+                // ns.tprint("i_p exceeded purchasedServers.length. breaking loop. remaining threads: " + remainingThreads);
                 break;
             }
         }
 
         // ------------------ also run hack_all.js ----------------
         ns.exec("hack_all.js", "home", 1, "nuke"); // nuke all servers
-        await ns.sleep(1000); // wait for nuke to finish, just in case. I'm not sure we actually need it
+        await ns.sleep(100); // wait for nuke to finish, just in case. I'm not sure we actually need it
         ns.exec("hack_all.js", "home", 1, "hack"); // hack all servers
-        await ns.sleep(5000); // wait a bit ...
+        await ns.sleep(500); // wait a bit ...
         ns.exec("hack_all.js", "home", 1, "hack"); // ... and do it again. Sometimes it seems it only worked after the second time. In any case, this should not hurt. 
 
-        // todo: maybe add purchasing/upgrading of servers in here as well so that we really don't have to do anything manually anymore.
+        ns.run('purchase_server.js', 1, 'purchase'); // purchase servers
+        ns.run('purchase_server.js', 1, 'upgrade'); // upgrade servers
 
         await ns.sleep(updateInterval); // wait until the next update cycle
     }
