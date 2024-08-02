@@ -30,7 +30,7 @@ export async function main(ns) {
         let maxServers = ns.getPurchasedServerLimit();
         let currentServers = purchasedServers.length;
         if (currentServers >= maxServers) {
-            ns.tprint("Already at max servers");
+            // ns.tprint("Already at max servers");
             return;
         }
 
@@ -47,7 +47,7 @@ export async function main(ns) {
                 let cost = ns.getPurchasedServerCost(purchaseRAM);
                 if (cost <= budget) {
                     ns.purchaseServer(purchasedServerPrefix + currentServers, purchaseRAM);
-                    ns.tprint(`Bought: ${purchasedServerPrefix}${currentServers} with ${purchaseRAM} RAM for ${cost}`);
+                    // ns.tprint(`Bought: ${purchasedServerPrefix}${currentServers} with ${purchaseRAM} RAM for ${cost}`);
                     budget -= cost;
                     currentServers++;
                     break;

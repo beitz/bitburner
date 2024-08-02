@@ -9,6 +9,15 @@ Aevum
 - Located in Aevum
 - Have $4e7
 
+Ishima
+- Located in Ishima
+- Have $3e7
+
+Tian Di Hui
+- Located in Chongqing, New Tokyo, Ishima
+- Hacking level 50
+- Have $1e6
+
 # Story factions
 CyberSec
 - Backdoor Access to CSEC server
@@ -21,6 +30,11 @@ The Black Hand
 
 BitRunners
 - Backdoor access to urn4theh111z server
+
+Daedalus
+- 30 aufmentations installed
+- Have $1e11
+- Hacking level 2500 or ALL combat skills level 1500
 
 # Other factions
 Netburners
