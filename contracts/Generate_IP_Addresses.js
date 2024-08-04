@@ -1,95 +1,130 @@
 /** @param {NS} ns **/
 
-// ------------------ description ------------------
-// You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the contract will self-destruct.
-// Given the following string containing only digits, return an array with all possible valid IP address combinations that can be created from the string:
-// 452061059
-// Note that an octet cannot begin with a '0' unless the number itself is exactly '0'. For example, '192.168.010.1' is not a valid IP.
-// Examples:
-// 25525511135 -> ["255.255.11.135", "255.255.111.35"]
-// 1938718066 -> ["193.87.180.66"]
-// If your solution is an empty string, you must leave the text box empty. Do not use "", '', or ``.
-
-// todo: if we try to solve a contract that doesn't exist, we get a runtime error. prevent this somehow at some point. 
+/**
+ * This script solves the "Generate IP Addresses" coding contract.
+ * Given a string of digits, it returns all possible valid IP addresses that can be created from the string.
+ * 
+ * Valid IP address: 
+ * - Consists of 4 octets, each a number between 0 and 255
+ * - An octet can not start with a 0 unless the number itself is 0
+ * 
+ * Usage:
+ * 1. Test mode: run Generate_IP_Addresses.js test
+ * 2. Solve contract: run Generate_IP_Addresses.js <contract_file> <host>
+ * 
+ * Description:
+ * You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the contract will self-destruct.
+ * Given the following string containing only digits, return an array with all possible valid IP address combinations that can be created from the string:
+ * 452061059
+ * Note that an octet cannot begin with a '0' unless the number itself is exactly '0'. For example, '192.168.010.1' is not a valid IP.
+ * Examples:
+ * 25525511135 -> ["255.255.11.135", "255.255.111.35"]
+ * 1938718066 -> ["192.87.180.66"]
+ * If your solution is an empty string, you must leave the text box empty. Do not use "", '', or ``.
+ */
 
 export async function main(ns) {
-    ns.tprint("running Generate IP Addresses contract with args: " + ns.args);
+    const printToTerminal = false; // When automatically executing this script, it's annoying to have the output in the terminal. 
+    const isTestMode = ns.args[0] === "test";
+    let contractFile, host, inputData;
 
-    // ------------------ test ------------------
-    if (ns.args[0] === "test") { // create dummy contract of type generate ip addresses
-        var contractFile = ns.codingcontract.createDummyContract("Generate IP Addresses");
-        var host = 'home';
-        var inputData = ns.codingcontract.getData(contractFile, host);
-        var testing = true;
-        ns.tprint(`created dummy contract: ${contractFile} on host: ${host}`);
-    } else { // first arg = contract file, second arg = host
-        var contractFile = ns.args[0];
-        var host = ns.args[1];
-        var inputData = ns.codingcontract.getData(contractFile, host);
-        ns.tprint(`contract file: ${contractFile}, host: ${host}, inputData: ${inputData}`);
+    if (isTestMode) {
+        ({ contractFile, host, inputData } = createTestContract(ns));
+    } else {
+        [contractFile, host, inputData] = getContractData(ns);
     }
 
-    // ------------------ solution ------------------
-    
-    // first let's go through the the process real quick
-    // we have 4 octets in an IP address, so for the string we can define 4 positions where we can split the string
-    // at first the first 3 positions will have a length of 1 with the last one being filled with the rest of the string
-    // each iteration we increase the length of the last position by 1 until we reach the end of the string
-    // then we increment the second to last position by 1 and reset the last position to 1, etc. 
-    // wo do this until all possible combinations have been tested. 
-    // for the testing, we simply check if the number is within the range of 0 and 255 and if it starts with a 0
-    
-    let splitPos1 = 1;
-    let splitPos2 = 1;
-    let splitPos3 = 1;
-    let octet1, octet2, octet3, octet4;
-    let solution = [];
-    
-    ns.tprint(`inputData: ${inputData}`);
+    const solution = generateValidIPAddresses(inputData);
 
-    while (splitPos1 < inputData.length) {
-        while (splitPos2 < inputData.length - splitPos1) {
-            while (splitPos3 < inputData.length - splitPos1 - splitPos2) {
-                octet1 = inputData.substring(0, splitPos1);
-                octet2 = inputData.substring(splitPos1, splitPos1 + splitPos2);
-                octet3 = inputData.substring(splitPos1 + splitPos2, splitPos1 + splitPos2 + splitPos3);
-                octet4 = inputData.substring(splitPos1 + splitPos2 + splitPos3);
-                // ns.tprint(`${splitPos1}|${splitPos2}|${splitPos3} octet1: ${octet1}, octet2: ${octet2}, octet3: ${octet3}, octet4: ${octet4}`);
-                // if first character is a 0 in any of the octets, we skip this iteration
-                splitPos3++;
-                if (octet1.startsWith('0') || octet2.startsWith('0') || octet3.startsWith('0') || octet4.startsWith('0')) {
-                    continue;
-                }
-                // we check the length of each octet and if it is longer than 3, we skip this iteration
-                if (octet1.length > 3 || octet2.length > 3 || octet3.length > 3 || octet4.length > 3) {
-                    continue;
-                }
-                // we convert each octet into a number and check if its within the rance of 0 and 255
-                octet1 = parseInt(octet1);
-                octet2 = parseInt(octet2);
-                octet3 = parseInt(octet3);
-                octet4 = parseInt(octet4);
-                if (octet1 >= 0 && octet1 <= 255 && octet2 >= 0 && octet2 <= 255 && octet3 >= 0 && octet3 <= 255 && octet4 >= 0 && octet4 <= 255) {
-                    let ip = `${octet1}.${octet2}.${octet3}.${octet4}`;
-                    solution.push(ip);
+    if (printToTerminal) { ns.tprint(`Attempting to solve contract: ${contractFile} on host: ${host} with input: ${inputData} and solution: ${solution}`) }
+
+    const reward = ns.codingcontract.attempt(solution, contractFile, host);
+
+    handleContractResult(ns, reward, contractFile, host, isTestMode, printToTerminal);
+}
+
+function createTestContract(ns) {
+    const contractFile = ns.codingcontract.createDummyContract("Generate IP Addresses");
+    const host = 'home';
+    const inputData = ns.codingcontract.getData(contractFile, host);
+    return { contractFile, host, inputData };
+}
+
+function getContractData(ns) {
+    const contractFile = ns.args[0];
+    const host = ns.args[1];
+
+    // check if host  and file actually exist
+    if (!ns.serverExists(host)) {
+        ns.tprint(`Error 9845247: Host ${host} does not exist!`);
+        return;
+    }
+    if (!ns.fileExists(contractFile, host)) {
+        ns.tprint(`Error 9845248: Contract file ${contractFile} does not exist on host ${host}!`);
+        return;
+    }
+
+    const inputData = ns.codingcontract.getData(contractFile, host);
+    return [contractFile, host, inputData];
+}
+
+function generateValidIPAddresses(inputData) {
+    /**
+     * This function generates all possible valid IP addresses from a given string.
+     * It does this by trying all possible ways to split the string into four parts,
+     * each representing an octet of the IP address.
+     *
+     * Variables:
+     * - s1: Position of the first split
+     * - s2: Position of the second split
+     * - s3: Position of the third split
+     * - octet1: The first part of the IP address
+     * - octet2: The second part of the IP address
+     * - octet3: The third part of the IP address
+     * - octet4: The fourth part of the IP address
+     *
+     * The function checks if each part (octet) is valid and if so, combines them into a valid IP address.
+     */
+
+    const solution = [];
+    const len = inputData.length;
+
+    // Loop through possible positions for the first split
+    for (let s1 = 1; s1 < len && s1 < 4; s1++) { // s1 must be at least 1 and at most 3 characters from the start
+        // Loop through possible positions for the second split
+        for (let s2 = s1 + 1; s2 < len && s2 < s1 + 4; s2++) { // s2 must be at least 1 character after s1 and at most 3 characters from s1
+            // Loop through possible positions for the third split
+            for (let s3 = s2 + 1; s3 < len && s3 < s2 + 4; s3++) { // s3 must be at least 1 character after s2 and at most 3 characters from s2
+                const octet1 = inputData.substring(0, s1);
+                const octet2 = inputData.substring(s1, s2);
+                const octet3 = inputData.substring(s2, s3);
+                const octet4 = inputData.substring(s3);
+
+                // Check if all octets are valid
+                if (isValidOctet(octet1) && isValidOctet(octet2) && isValidOctet(octet3) && isValidOctet(octet4)) {
+                    solution.push(`${octet1}.${octet2}.${octet3}.${octet4}`);
                 }
             }
-            splitPos2++;
-            splitPos3 = 1;
         }
-        splitPos1++;
-        splitPos2 = 1;
     }
 
-    // ------------------ submit ------------------
+    return solution;
+}
 
-    ns.tprint(`attempting to solve with input: ${inputData} and solution: ${solution}`);
-    let reward = ns.codingcontract.attempt(solution, contractFile, host);
+function isValidOctet(octet) {
+    if (octet.length > 1 && octet.startsWith('0')) {
+        return false;
+    }
+    const num = parseInt(octet);
+    return num >= 0 && num <= 255;
+}
+
+function handleContractResult(ns, reward, contractFile, host, isTestMode, printToTerminal) {
     if (reward) {
-        ns.tprint(`contract solved! reward: ${reward}`);
+        if (printToTerminal) { ns.tprint(`Contract solved! Reward: ${reward}`); }
     } else {
-        ns.tprint("contract failed");
-        if (testing) {
+        if (printToTerminal) { ns.tprint("Contract failed"); }
+        if (isTestMode) {
             ns.rm(contractFile, host);
         }
     }
