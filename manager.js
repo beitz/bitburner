@@ -43,6 +43,32 @@ function parseValue(value) { // function to parse the value to the correct type
 export async function main(ns) {
     // ------------------ variables ------------------
     let updateInterval = 1000 * 60 * 60; // 60 minutes by default. interval for updating data
+    let spendMoney = true; // by default we spend money
+    for (let i = 0; i < ns.args.length; i++) {
+        // we can have several args that consist of a string, a colon and a value. Like this "u:60" for update interval of 60 minutes. 
+        // args:
+        // u = update interval in minutes
+        // m = spend money? if true we can spend money on purchasing servers and other things
+        if (ns.args[i].includes(':')) {
+            let arg = ns.args[i].split(':');
+            if (arg[0] === 'u') { // update interval
+                updateInterval = 1000 * 60 * arg[1];
+            }
+            if (arg[0] === 'm') { // spend money
+                if (arg[1] === 'false') {
+                    spendMoney = false;
+                }
+            }
+        }
+        // if run with 'help' as the first argument, we print the help text and exit
+        if (ns.args[0] === 'help') {
+            ns.tprint("Usage: run manager.js <args>");
+            ns.tprint("Args:");
+            ns.tprint("- 'u:<minutes>' to set the update interval in minutes");
+            ns.tprint("- 'm:false' to not spend money");
+            return;
+        }
+    }
     if (!isNaN(ns.args[0])) { // if first arg is a number, we set the update interval to that number of minutes
         updateInterval = 1000 * 60 * ns.args[0];
     }
@@ -74,8 +100,10 @@ export async function main(ns) {
         ns.run('scan.js'); // scan all servers again to see if we have any new hackable servers
         await ns.sleep(10); // wait for scan.js to finish
 
-        ns.run('purchase_server.js', 1, 'purchase'); // purchase servers
-        ns.run('purchase_server.js', 1, 'upgrade'); // upgrade servers
+        if (spendMoney) {
+            ns.run('purchase_server.js', 1, 'purchase'); // purchase servers
+            ns.run('purchase_server.js', 1, 'upgrade'); // upgrade servers
+        }
 
         let serverData = readData(ns, servers_file); // 2d array that will hold all the server data
         // get the indexes of the following column headers so we can address them by name
