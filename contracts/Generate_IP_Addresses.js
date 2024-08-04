@@ -1,5 +1,7 @@
 /** @param {NS} ns **/
 
+import { createTestContract, getContractData, handleContractResult } from 'contracts/contractUtils.js';
+
 /**
  * This script solves the "Generate IP Addresses" coding contract.
  * Given a string of digits, it returns all possible valid IP addresses that can be created from the string.
@@ -12,60 +14,29 @@
  * 1. Test mode: run Generate_IP_Addresses.js test
  * 2. Solve contract: run Generate_IP_Addresses.js <contract_file> <host>
  * 
- * Description:
- * You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the contract will self-destruct.
- * Given the following string containing only digits, return an array with all possible valid IP address combinations that can be created from the string:
- * 452061059
- * Note that an octet cannot begin with a '0' unless the number itself is exactly '0'. For example, '192.168.010.1' is not a valid IP.
  * Examples:
  * 25525511135 -> ["255.255.11.135", "255.255.111.35"]
  * 1938718066 -> ["192.87.180.66"]
- * If your solution is an empty string, you must leave the text box empty. Do not use "", '', or ``.
  */
 
 export async function main(ns) {
-    const printToTerminal = false; // When automatically executing this script, it's annoying to have the output in the terminal. 
     const isTestMode = ns.args[0] === "test";
     let contractFile, host, inputData;
 
     if (isTestMode) {
-        ({ contractFile, host, inputData } = createTestContract(ns));
+        ({ contractFile, host, inputData } = createTestContract(ns, "Generate IP Addresses"));
     } else {
-        [contractFile, host, inputData] = getContractData(ns);
+        [contractFile, host, inputData] = getContractData(ns, ns.args[0], ns.args[1]);
     }
 
     const solution = generateValidIPAddresses(inputData);
 
-    if (printToTerminal) { ns.tprint(`Attempting to solve contract: ${contractFile} on host: ${host} with input: ${inputData} and solution: ${solution}`) }
+    if (isTestMode) {
+        ns.tprint(`Attempting to solve contract: ${contractFile} on host: ${host} with input: ${inputData} and solution: ${solution}`)
+    }
 
     const reward = ns.codingcontract.attempt(solution, contractFile, host);
-
-    handleContractResult(ns, reward, contractFile, host, isTestMode, printToTerminal);
-}
-
-function createTestContract(ns) {
-    const contractFile = ns.codingcontract.createDummyContract("Generate IP Addresses");
-    const host = 'home';
-    const inputData = ns.codingcontract.getData(contractFile, host);
-    return { contractFile, host, inputData };
-}
-
-function getContractData(ns) {
-    const contractFile = ns.args[0];
-    const host = ns.args[1];
-
-    // check if host  and file actually exist
-    if (!ns.serverExists(host)) {
-        ns.tprint(`Error 9845247: Host ${host} does not exist!`);
-        return;
-    }
-    if (!ns.fileExists(contractFile, host)) {
-        ns.tprint(`Error 9845248: Contract file ${contractFile} does not exist on host ${host}!`);
-        return;
-    }
-
-    const inputData = ns.codingcontract.getData(contractFile, host);
-    return [contractFile, host, inputData];
+    handleContractResult(ns, reward, contractFile, host, isTestMode);
 }
 
 function generateValidIPAddresses(inputData) {
@@ -117,15 +88,4 @@ function isValidOctet(octet) {
     }
     const num = parseInt(octet);
     return num >= 0 && num <= 255;
-}
-
-function handleContractResult(ns, reward, contractFile, host, isTestMode, printToTerminal) {
-    if (reward) {
-        if (printToTerminal) { ns.tprint(`Contract solved! Reward: ${reward}`); }
-    } else {
-        if (printToTerminal) { ns.tprint("Contract failed"); }
-        if (isTestMode) {
-            ns.rm(contractFile, host);
-        }
-    }
 }
