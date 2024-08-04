@@ -44,7 +44,7 @@ export async function main(ns) {
     handleContractResult(ns, reward, contractFile, host, isTestMode);
 }
 
-function generateValidIPAddresses(inputData) {
+function generateValidIPAddresses(inputData) { // Generate all possible valid IP addresses from a string
     /**
      * This function generates all possible valid IP addresses from a given string.
      * It does this by trying all possible ways to split the string into four parts,
@@ -87,7 +87,7 @@ function generateValidIPAddresses(inputData) {
     return solution;
 }
 
-function isValidOctet(octet) {
+function isValidOctet(octet) { // Check if an octet is valid
     if (octet.length > 1 && octet.startsWith('0')) {
         return false;
     }

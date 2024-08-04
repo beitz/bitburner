@@ -2,7 +2,7 @@
 
 // simple version of hacking script specifically made to be run on target server by ns.exec()
 
-// usage: execute with ns.exec(script, target, threads, arg1, arg2, ...)
+// usage: execute with ns.exec(script file, target server, threads, arg1 = threads, arg2 = money threshold, ...)
 // args:
 // - arg1: number of threads to use for hacking
 // - arg2: money threshold at which we will hack the server

@@ -123,7 +123,7 @@ export async function main(ns) {
         let contractFile = `contract-${contractNumber}.cct`;
         let contractFound = false;
         let contractHost = "";
-        
+
         // go through all hosts in serverData and check if the contract with the given number exists
         for (let i = 1; i < serverData.length - 1; i++) {
             let hostname = serverData[i][index_hostname];

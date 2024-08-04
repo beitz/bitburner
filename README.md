@@ -55,3 +55,19 @@ todo: rewrite all of this
 - all tables are saved as 2d arrays as files somewhere as `*.txt` files, because Bitburner only allows us to work with txt and js files. 
 - all tables have `|` as their delimiter and start new lines with `\n`. 
 - all tables have a header row, so we usually start indexing at 1 instead of 0. This way we can simply find the index of the header instead of working with a column number. 
+- all functions can be called with no arguments, which should display help to the terminal
+
+### workflow
+until I rewrite all of this, here is the general workflow
+
+1. Start `manager.js u:5` or so to execute all kinds of functions every 5 minutes in this case. This includes hacking of servers, either from home or on the target server itsels, nuking of servers, purchasing servers, solving contracts (wip), scanning the network to update server data, etc. 
+1. Installing of backdoors is still manual
+1. Join factions, farm their reputation, install augmentations
+
+### file structure
+
+1. `manager.js` runs in the background executing all other scripts: 
+    1. `periodic_scan.js` is run at the beginning with an interval of 1 minute, if it isn't running already
+        1. This will scan the network and overwrite the data to `data/servers_current.txt`. This is the file that other scripts will read to get the current server info. 
+        1. This will also append to `data/servers.txt`. This is the log file that we can use for plotting. 
+    1. `scan.js` is used to update the `data/servers_current.txt` file with new data. Useful after we have done something to the servers, e.g. started hacking on them, to get updated information on the servers. 
