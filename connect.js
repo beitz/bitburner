@@ -7,8 +7,7 @@ import { readData } from 'utils/utils.js';
  * It reads the server data from "data/servers_current.txt" and creates a connection string to the specified server.
  * This string is put into the clipboard so it can be pasted into the terminal.
  * 
- * It's not cool, but it works. 
- * I'll have to use this until I figure out how to directly connect without having to paste the string.
+ * todo: figure out how to directly connect without having to paste the string into the terminal
  * 
  * Usage: 
  * 1. run connect.js <hostname>
@@ -16,15 +15,18 @@ import { readData } from 'utils/utils.js';
  */
 
 export async function main(ns) {
+    // ------------------ check arguments ------------------
     if (ns.args.length !== 1) {
         ns.tprint("Usage: run connect.js <hostname>");
         return;
     }
 
+    // ------------------ variables ------------------
     const hostname = ns.args[0];
     const filePath = "data/servers_current.txt";
     const serverData = readData(ns, filePath);
 
+    // ------------------ check data and files ------------------
     // check if the file was read correctly
     if (!serverData || serverData.length === 0) {
         ns.tprint(`Error 8474: Could not read data from ${filePath}`);
@@ -38,6 +40,7 @@ export async function main(ns) {
         return;
     }
 
+    // ------------------ main ------------------
     const connectionString = buildConnectionString(serverData, targetServerRow);
     navigator.clipboard.writeText(connectionString); // copy the connection string to the clipboard
 
