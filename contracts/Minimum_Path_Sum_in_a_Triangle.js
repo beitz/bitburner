@@ -46,16 +46,53 @@ export async function main(ns) {
 
     // ------------------ solution ------------------
 
-    let solution = [];
-    
-    // first let's go through the the process real quick
-    // we have a 2d array representing a triangle
-    // .... 
-    // and somehow we find the minimum path sum from top to bottom
-    
-    ns.tprint(`inputData: ${inputData}`);
+    let solution = 1000000000; // initialize solution with a stupid high number
 
-    // todo: solution here
+    // first let's go through the the process real quick
+    // we have a 2d array representing a triangle, e.g. [[2], [3,4], [6,5,7], [4,1,8,3]]
+    // we go through the array one column at a time
+    // we save the minimum sum in the variable solution. if a new minimum is found, we overwrite.
+    // we can only move directly to the column below or the column below and to the right.
+    // to achieve that we create a new 1d array with pointers to the columns in the 2d array.
+
+    let pointers = [];
+    for (let i = 0; i < inputData.length; i++) {
+        pointers.push(0);
+    }
+
+    ns.tprint(inputData);
+    let solutionFound = false;
+
+    while (!solutionFound) {
+        let currentPathSum = 0;
+        // ns.tprint(`pointers: ${pointers}`);
+        for (let i = 0; i < pointers.length; i++) {
+            currentPathSum += inputData[i][pointers[i]];
+            // ns.tprint(`inputData[${i}][${pointers[i]}]: ${inputData[i][pointers[i]]}`);
+        }
+        // ns.tprint(`currentPathSum: ${currentPathSum}   ,  solution: ${solution}`);
+        if (currentPathSum < solution) {
+            solution = currentPathSum;
+        }
+        // we go through the pointers from last to first. 
+        // if the last pointer is the same as the one above, we increment it. Else we go look at the one above with that same logic. 
+        for (let i = pointers.length - 1; i >= 0; i--) {
+            if (pointers[i] === pointers[i - 1]) {
+                pointers[i]++;
+                // we reset all pointers below the current one
+                for (let j = i + 1; j < pointers.length; j++) {
+                    pointers[j] = pointers[i];
+                }
+                break;
+            }
+            // if we reach the first pointer, we've gone through the whole array
+            if (i === 0) {
+                // ns.tprint(`solution found!`);
+                solutionFound = true;
+                break;
+            }
+        }
+    }
 
     // ------------------ submit ------------------
 

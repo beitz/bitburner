@@ -11,7 +11,7 @@ Algorithmic Stock Trader I|contracts/Algorithmic_Stock_Trader_I.js|todo
 Algorithmic Stock Trader II|contracts/Algorithmic_Stock_Trader_II.js|todo
 Algorithmic Stock Trader III|contracts/Algorithmic_Stock_Trader_III.js|todo
 Algorithmic Stock Trader IV|contracts/Algorithmic_Stock_Trader_IV.js|todo
-Minimum Path Sum in a Triangle|contracts/Minimum_Path_Sum_in_a_Triangle.js|todo
+Minimum Path Sum in a Triangle|contracts/Minimum_Path_Sum_in_a_Triangle.js|done
 Unique Paths in a Grid I|contracts/Unique_Paths_in_a_Grid_I.js|todo
 Unique Paths in a Grid II|contracts/Unique_Paths_in_a_Grid_II.js|todo
 Shortest Path in a Grid|contracts/Shortest_Path_in_a_Grid.js|todo
