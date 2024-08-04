@@ -1,6 +1,6 @@
 /** @param {NS} ns **/
 
-import { createTestContract, getContractData, handleContractResult } from 'contracts/contractUtils.js';
+import { createTestContract, getContractData, handleContractResult } from 'utils/contractUtils.js';
 
 /**
  * This script solves the "Generate IP Addresses" coding contract.
@@ -20,15 +20,20 @@ import { createTestContract, getContractData, handleContractResult } from 'contr
  */
 
 export async function main(ns) {
-    const isTestMode = ns.args[0] === "test";
     let contractFile, host, inputData;
+    const isTestMode = ns.args[0] === "test";
 
     if (isTestMode) {
         ({ contractFile, host, inputData } = createTestContract(ns, "Generate IP Addresses"));
-    } else {
+    } else if (ns.args.length === 2) {
         [contractFile, host, inputData] = getContractData(ns, ns.args[0], ns.args[1]);
+    } else {
+        ns.tprint("Usage:");
+        ns.tprint("1. Test mode: run Generate_IP_Addresses.js test");
+        ns.tprint("2. Solve contract: run Generate_IP_Addresses.js <contract_file> <host>");
+        return;
     }
-
+    
     const solution = generateValidIPAddresses(inputData);
 
     if (isTestMode) {

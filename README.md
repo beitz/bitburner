@@ -45,3 +45,13 @@ Sometimes we'll have to `connect.js` to a specific server in the network to inst
 Then we'll do work for that faction to gain reputation and buy their augmentations. 
 We install the augmentations. 
 rinse and repeat. 
+
+# General Info
+
+Just some general information on the stuff I have here. I'll rewrite it at some point, but for now I'll just write down what I can before I forget. 
+todo: rewrite all of this
+
+- we periodically scan the whole network and save the data in `data/servers_current.txt`. This is the file that all other scripts read to get info. 
+- all tables are saved as 2d arrays as files somewhere as `*.txt` files, because Bitburner only allows us to work with txt and js files. 
+- all tables have `|` as their delimiter and start new lines with `\n`. 
+- all tables have a header row, so we usually start indexing at 1 instead of 0. This way we can simply find the index of the header instead of working with a column number. 
