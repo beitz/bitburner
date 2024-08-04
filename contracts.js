@@ -49,26 +49,8 @@ export async function main(ns) {
     // ------------------ main ------------------
     if (action === 'list') {
         listContracts(ns, serverData);
-        return;
     } else if (action === 'solve') {
-        // get the type of the contract
-        let contractType = ns.codingcontract.getContractType(contractFile, hostname);
-        // check if the script for solving the contract is done
-        if (isContractDone(contractData, contractType)) {
-            // get the script to solve the contract
-            let contractScriptFile = getContractScriptFile(contractData, contractType);
-
-            // check if we have enough RAM to execute the script
-            let freeRam = ns.getServerMaxRam('home') - ns.getServerUsedRam('home');
-            let scriptRam = ns.getScriptRam(contractScriptFile, 'home');
-            if (freeRam < scriptRam) {
-                ns.tprint(`Not enough free RAM to execute script: ${contractScriptFile}. We have ${Math.floor(freeRam)} RAM available, but we need ${scriptRam} RAM`);
-                return;
-            }
-
-            // attempt to run the script to solve the contract
-            ns.exec(contractScriptFile, 'home', 1, contractFile, hostname);
-        } 
+        solveContract(ns, contractFile, hostname, contractData);
     }
 }
 
@@ -79,19 +61,48 @@ function initializeContractScripts(ns, contractScriptsFile) { // initialize the 
         contractData.push([contracts[i], `contracts/${contracts[i].replace(/ /g, '_')}.js`, "todo"]);
     }
     writeData(ns, contractScriptsFile, contractData);
+
+    // todo: when we initialize, maybe also create the script files if they don't exist
+    //       if they exist, then run them and if we can solve, say 100 out of 100 contracts, then mark them as done
+    //       maybe we could also add the action "update" to this script to update the contract scripts and mark them as done
 }
 
 function listContracts(ns, serverData) { // list all contracts on all servers
-    for (let row = 1; row < serverData.length; row++) {
+    for (let row = 1; row < serverData.length - 1; row++) {
         let index_hostname = serverData[0].indexOf('hostname');
         let hostname = serverData[row][index_hostname];
         let files = ns.ls(hostname);
         for (let file of files) {
             if (file.includes("contract-")) {
                 ns.tprint(`Found contract on ${hostname}: ${file}, type: ${ns.codingcontract.getContractType(file, hostname)}`);
+                // todo: save the files in a 2d array
+                //       then figure out the longest string in each column
+                //       then print the files with the correct spacing to make it look nice in the terminal
+                //       also, add column to the right with a ✔ if the contract script is done
             }
         }
     }
+}
+
+function solveContract(ns, contractFile, hostname, contractData) {
+    // get the type of the contract
+    let contractType = ns.codingcontract.getContractType(contractFile, hostname);
+    // check if the script for solving the contract is done
+    if (isContractDone(contractData, contractType)) {
+        // get the script to solve the contract
+        let contractScriptFile = getContractScriptFile(contractData, contractType);
+
+        // check if we have enough RAM to execute the script
+        let freeRam = ns.getServerMaxRam('home') - ns.getServerUsedRam('home');
+        let scriptRam = ns.getScriptRam(contractScriptFile, 'home');
+        if (freeRam < scriptRam) {
+            ns.tprint(`Error 8715: Not enough free RAM to execute script: ${contractScriptFile}. We have ${Math.floor(freeRam)} RAM available, but we need ${scriptRam} RAM`);
+            return;
+        }
+
+        // attempt to run the script to solve the contract
+        ns.exec(contractScriptFile, 'home', 1, contractFile, hostname);
+    } 
 }
 
 function isContractDone(contractData, contractType) { // check if the contract script is done

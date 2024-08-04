@@ -1,4 +1,5 @@
 contract type|script file|status
+Find Largest Prime Factor|contracts/Find_Largest_Prime_Factor.js|todo
 Subarray with Maximum Sum|contracts/Subarray_with_Maximum_Sum.js|todo
 Total Ways to Sum|contracts/Total_Ways_to_Sum.js|todo
 Total Ways to Sum II|contracts/Total_Ways_to_Sum_II.js|todo
