@@ -7,7 +7,10 @@
 // - should use scan.js to scan servers and get info on them
 // - starts periodic_scan.js if it is not running already to log all kinds of server data
 
+// todo: periodically do a scan, as lot's of functions rely on the data there and sometimes we have to wait for the next update cycle for the function to properly work.
+//       or maybe it's something else. Idk. I'm thinking of running the scripts on purchased servers. 
 // todo: figure out why we sometimes don't have anything running on our 'home' server. So much wasted RAM ...
+// todo: also figure out why buying/upgrading servers sometimes doesn't work. 
 
 // ------------------ functions ------------------
 function readData(ns, file) { // function to read the data from a file
@@ -47,6 +50,7 @@ export async function main(ns) {
     // todo: implement the restart hack interval. The idea is that I check every 5 minutes and start new hacking scripts wherever there is a newly hackable server with free RAM.
     //       Only once an hour or so I kill all running hacking scripts and restart them to distribute the threads hopefully more cleverly. 
     let restartTimer = Date.now(); // initialize restart timer // todo: implement restart timer
+    const freeRAMonHome = 50 // gb of RAM we want to keep free on home server
     const hack_file = "hack_simple_3.js"; // usage: execute with ns.exec(script, target, threads, arg1, arg2, ...)
     const servers_file = "data/servers_current.txt";
     const script_ram = ns.getScriptRam(hack_file); // ram usage of the hack script
@@ -69,7 +73,7 @@ export async function main(ns) {
         await ns.sleep(10); // wait for scan.js to finish
         ns.run('scan.js'); // scan all servers again to see if we have any new hackable servers
         await ns.sleep(10); // wait for scan.js to finish
-        
+
         ns.run('purchase_server.js', 1, 'purchase'); // purchase servers
         ns.run('purchase_server.js', 1, 'upgrade'); // upgrade servers
 
@@ -85,7 +89,10 @@ export async function main(ns) {
         // ------------------ do some logic and execute scripts to start hacking from our purchased servers ------------------
 
         // let's go add up all the ram that we have available to us first on our home server (-20 gb for other random scripts) and all the purchased servers
-        let totalRunnableThreads = Math.floor((ns.getServerMaxRam('home') - 24) / script_ram); // 24 gb for other random scripts
+        let totalRunnableThreads = Math.floor((ns.getServerMaxRam('home') - freeRAMonHome) / script_ram); // 50 gb for other random scripts
+        if (totalRunnableThreads < 0) {
+            totalRunnableThreads = 0;
+        }
         for (let i = 1; i < serverData.length; i++) {
             // we divide the available ram on the server by the ram required of the hack script and floor the value. 
             // this is to prevent us calculating with the unusable, tiny last portion of ram on each server
@@ -159,7 +166,11 @@ export async function main(ns) {
         let indexThreadsPurchasedServers = purchasedServers[0].indexOf('threads'); // get the index of the new column
         for (let i = 1; i < purchasedServers.length; i++) {
             purchasedServers[i].push(''); // add a new column to the end of the array for percentageValue
-            purchasedServers[i].push(Math.floor((purchasedServers[i][index_maxRam] - 0) / script_ram)); // 0 gb for other random scripts reserved
+            if (purchasedServers[i][index_hostname] === 'home') {
+                purchasedServers[i].push(Math.floor((ns.getServerMaxRam('home') - freeRAMonHome) / script_ram)); // 50 gb for other random scripts
+            } else {
+                purchasedServers[i].push(Math.floor((purchasedServers[i][index_maxRam] - 0) / script_ram)); // 0 gb for other random scripts reserved
+            }
 
             // while we're at it, let's remove the hack script from the server and copy a new version of it to the server
             // skip 'home' as we don't want to remove the hack script from there

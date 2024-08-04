@@ -1,0 +1,27 @@
+contract type|script file|status
+Subarray with Maximum Sum|contracts/Subarray_with_Maximum_Sum.js|todo
+Total Ways to Sum|contracts/Total_Ways_to_Sum.js|todo
+Total Ways to Sum II|contracts/Total_Ways_to_Sum_II.js|todo
+Spiralize Matrix|contracts/Spiralize_Matrix.js|todo
+Array Jumping Game|contracts/Array_Jumping_Game.js|todo
+Array Jumping Game II|contracts/Array_Jumping_Game_II.js|todo
+Merge Overlapping Intervals|contracts/Merge_Overlapping_Intervals.js|todo
+Generate IP Addresses|contracts/Generate_IP_Addresses.js|done
+Algorithmic Stock Trader I|contracts/Algorithmic_Stock_Trader_I.js|todo
+Algorithmic Stock Trader II|contracts/Algorithmic_Stock_Trader_II.js|todo
+Algorithmic Stock Trader III|contracts/Algorithmic_Stock_Trader_III.js|todo
+Algorithmic Stock Trader IV|contracts/Algorithmic_Stock_Trader_IV.js|todo
+Minimum Path Sum in a Triangle|contracts/Minimum_Path_Sum_in_a_Triangle.js|todo
+Unique Paths in a Grid I|contracts/Unique_Paths_in_a_Grid_I.js|todo
+Unique Paths in a Grid II|contracts/Unique_Paths_in_a_Grid_II.js|todo
+Shortest Path in a Grid|contracts/Shortest_Path_in_a_Grid.js|todo
+Sanitize Parentheses in Expression|contracts/Sanitize_Parentheses_in_Expression.js|todo
+Find All Valid Math Expressions|contracts/Find_All_Valid_Math_Expressions.js|todo
+HammingCodes: Integer to Encoded Binary|contracts/HammingCodes:_Integer_to_Encoded_Binary.js|todo
+HammingCodes: Encoded Binary to Integer|contracts/HammingCodes:_Encoded_Binary_to_Integer.js|todo
+Proper 2-Coloring of a Graph|contracts/Proper_2-Coloring_of_a_Graph.js|todo
+Compression I: RLE Compression|contracts/Compression_I:_RLE_Compression.js|todo
+Compression II: LZ Decompression|contracts/Compression_II:_LZ_Decompression.js|todo
+Compression III: LZ Compression|contracts/Compression_III:_LZ_Compression.js|todo
+Encryption I: Caesar Cipher|contracts/Encryption_I:_Caesar_Cipher.js|todo
+Encryption II: Vigenère Cipher|contracts/Encryption_II:_Vigenère_Cipher.js|todo

@@ -36,6 +36,7 @@ Not used anymore
     - also automatically nukes them and opens ports
 1. create programs to open ports whenever available
 1. grind faction reputation to purchase augmentations when possible
+1. List contracts with `run contracts.js list` and solve them with `contracts.js do 123456` where the number is the contract number. 
 
 This way we will purchase servers with our money each hour. 
 We will use the RAM on those servers + home server to hack all kinds of hackable targets in the network. 

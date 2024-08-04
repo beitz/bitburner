@@ -10,8 +10,16 @@
 // "Compression I: RLE Compression","Compression II: LZ Decompression","Compression III: LZ Compression",
 // "Encryption I: Caesar Cipher","Encryption II: Vigenère Cipher"]
 
+// available functions (https://github.com/bitburner-official/bitburner-src/blob/stable/markdown/bitburner.codingcontract.md):
+// attempt(answer, filename, host)	Attempts a coding contract, returning a reward string on success or empty string on failure.
+// createDummyContract(type)	Generate a dummy contract.
+// getContractType(filename, host)	Get the type of a coding contract.
+// getContractTypes()	List all contract types.
+// getData(filename, host)	Get the input data.
+// getDescription(filename, host)	Get the description.
+// getNumTriesRemaining(filename, host)	Get the number of attempts remaining.
+
 export async function main(ns) {
-    let contractTypes = ns.codingcontract.getContractTypes();
-    
-    // take this 1d array of contract types and save it as a 
+    let test = ns.getPurchasedServerCost(128);
+    ns.tprint(test);
 }

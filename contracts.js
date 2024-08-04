@@ -64,16 +64,39 @@ function writeData(ns, file, data) { // function to write the data to a file
 // getDescription(filename, host)	Get the description.
 // getNumTriesRemaining(filename, host)	Get the number of attempts remaining.
 
-// ------------------ variables ------------------
-let contractScriptsFile = "contracts/contract_scripts.txt";
 
 export async function main(ns) {
+    // ------------------ variables ------------------
+    let contractScriptsFile = "contracts/contract_scripts.txt";
+    let contractData; // 2d array containing the contract type, script file and status
+
+    if (!ns.fileExists(contractScriptsFile)) { // if the contractScriptsFile doesn't exist, initialize it
+        contractData = [["contract type", "script file", "status"]];
+        let contracts = ns.codingcontract.getContractTypes(); // list of all contract types
+        for (let i = 1; i < contracts.length; i++) {
+            contractData.push([contracts[i], `contracts/${contracts[i].replace(/ /g, '_')}.js`, "todo"]);
+        }
+        writeData(ns, contractScriptsFile, contractData);
+        // ns.tprint("file initialized")
+    } else { // we read the data from the file
+        contractData = readData(ns, contractScriptsFile);
+        // ns.tprint("file read")
+    }
+
     // first we go through all servers and look for files that contain "contract" in their name
     let serverData = readData(ns, "data/servers_current.txt");
     let index_hostname = serverData[0].indexOf('hostname');
 
+    if (ns.args.length === 0) { // if no args, print help
+        ns.tprint("Usage: run contracts.js <command> <args>");
+        ns.tprint("Available commands:");
+        ns.tprint("- list: list all contracts on all servers");
+        ns.tprint("- do <number>: do contract with number <number>");
+        return;
+    }
+
     if (ns.args[0] === 'list') { // list all contracts on all servers
-        for (let i = 1; i < serverData.length-1; i++) {
+        for (let i = 1; i < serverData.length - 1; i++) {
             let hostname = serverData[i][index_hostname];
             let files = ns.ls(serverData[i][index_hostname]);
             for (let file of files) {
@@ -96,13 +119,63 @@ export async function main(ns) {
             writeData(ns, contractScriptsFile, contractData);
         }
 
-        // todo: figure out how
+        let contractNumber = ns.args[1];
+        let contractFile = `contract-${contractNumber}.cct`;
+        let contractFound = false;
+        let contractHost = "";
+        
+        // go through all hosts in serverData and check if the contract with the given number exists
+        for (let i = 1; i < serverData.length - 1; i++) {
+            let hostname = serverData[i][index_hostname];
+            // ns.tprint(`Checking ${hostname}`);
+            let files = ns.ls(serverData[i][index_hostname]);
+            for (let file of files) {
+                if (file === contractFile) {
+                    contractFound = true;
+                    contractHost = hostname;
+                }
+            }
+        }
+        let contractType = ns.codingcontract.getContractType(contractFile, contractHost);
 
-        // first we can list all available contract types.
-        // then I'll save those as a 2d array in a file with those headers:
-        // |contract type|script file|status|
-
-        // then I'll first have to write the script files for each contract type
+        if (!contractFound) {
+            ns.tprint(`Contract with number ${contractNumber} not found`);
+            return;
+        } else {
+            ns.tprint(`Found contract with number ${contractNumber} on ${contractHost}, type: ${contractType}`);
+            // we found the contract, now we need to check if the script is done by checking in the array contractData
+            // if it is, we can attempt the contract
+            let contractScript = "";
+            for (let i = 1; i < contractData.length; i++) {
+                if (contractData[i][0] === contractType) {
+                    contractScript = contractData[i][1];
+                    if (contractData[i][2] === "done") {
+                        // lets first check if we have enough free ram to execute the script
+                        let maxRam = ns.getServerMaxRam('home');
+                        let usedRam = ns.getServerUsedRam('home');
+                        let scriptRam = ns.getScriptRam(contractScript, 'home');
+                        if (usedRam + scriptRam > maxRam) {
+                            ns.tprint(`Not enough free RAM to execute script: ${contractScript}. We have ${Math.floor(maxRam - usedRam)} RAM available, but we need ${scriptRam} RAM`);
+                            return;
+                        }
+                        // if the script is done, we can attempt to solve it
+                        ns.tprint(`Attempting contract: |${contractScript}| on |${contractHost}| for contract |${contractFile}|`);
+                        // ns.run(contractScript, 1, contractFile, contractHost); // 1 thread, first arg = contract file, second arg = host
+                        let pid = ns.exec(contractScript, contractHost, 1, contractFile, contractHost);
+                        ns.tprint(`pid: ${pid}`);
+                        ns.tprint(`this is what we are trying to execute:`);
+                        ns.tprint(`ns.exec(${contractScript}, ${contractHost}, 1, ${contractFile}, ${contractHost})`);
+                        // let's print the types of the variables we are trying to execute
+                        ns.tprint(`contractScript: ${typeof contractScript}`);
+                        ns.tprint(`contractHost: ${typeof contractHost}`);
+                        ns.tprint(`contractFile: ${typeof contractFile}`);
+                    } else {
+                        ns.tprint(`Contract script not done yet: ${contractScript}`);
+                        return;
+                    }
+                    break;
+                }
+            }
+        }
     }
-    
 }
