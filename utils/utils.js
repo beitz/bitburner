@@ -54,3 +54,10 @@ export function writeData(ns, file, data, mode = "w") { // function to write 2d 
 
     ns.write(file, formattedData, mode);
 }
+
+export function getDateTime() { // Function that returns the current date and time as a string
+    var now = new Date();
+    var dateFormatted = now.toLocaleDateString(`sv`);
+    var timeFormatted = now.toLocaleTimeString(`sv`);
+    return `${dateFormatted} ${timeFormatted}`;
+}

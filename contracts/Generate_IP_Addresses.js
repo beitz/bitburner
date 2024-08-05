@@ -41,7 +41,7 @@ export async function main(ns) {
     }
 
     const reward = ns.codingcontract.attempt(solution, contractFile, host);
-    handleContractResult(ns, reward, contractFile, host, isTestMode);
+    handleContractResult(ns, reward, contractFile, host, isTestMode, "Generate IP Addresses");
 }
 
 // ------------------ functions ------------------
