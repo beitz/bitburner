@@ -224,3 +224,10 @@ export async function main(ns) {
         if (print_line || i === 0) ns.tprint(row);
     }
 }
+
+// todo: incorporate this somehow into this script
+    // if (ns.args[0] === 'list') { // list our purchased servers: name, max ram, used ram
+    //     for (let i = 0; i < purchasedServers.length; i++) {
+    //         let server = ns.getServer(purchasedServers[i]);
+    //         ns.tprint(`${server.hostname}: ${server.ramUsed}/${server.maxRam}`);
+    //     }

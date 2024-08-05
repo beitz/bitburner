@@ -11,5 +11,6 @@
 // "Encryption I: Caesar Cipher","Encryption II: Vigenère Cipher"]
 
 export async function main(ns) {
-    ns.codingcontract.createDummyContract("Minimum Path Sum in a Triangle");
+    let purchasedServers = ns.getPurchasedServers();
+    ns.tprint(purchasedServers);
 }

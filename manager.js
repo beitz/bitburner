@@ -1,254 +1,261 @@
-/** @param {NS} ns */
+/** @param {NS} ns **/
 
-// script that manages everything else
-// - should manage what kind of servers to hack and with how many threads
-// - should manage our money and the buying of hacknet nodes or additional servers
-// - should manage files on our and other servers
-// - should use scan.js to scan servers and get info on them
-// - starts periodic_scan.js if it is not running already to log all kinds of server data
+import { readData, writeData } from 'utils/utils.js';
 
-// todo: periodically do a scan, as lot's of functions rely on the data there and sometimes we have to wait for the next update cycle for the function to properly work.
-//       or maybe it's something else. Idk. I'm thinking of running the scripts on purchased servers. 
-// todo: figure out why we sometimes don't have anything running on our 'home' server. So much wasted RAM ...
-// todo: also figure out why buying/upgrading servers sometimes doesn't work. 
-
-// ------------------ functions ------------------
-function readData(ns, file) { // function to read the data from a file
-    let serverData = [];
-    const data = ns.read(file);
-
-    for (let line of data.split('\n')) {
-        serverData.push(line.split('|').map(parseValue));
-    }
-
-    return serverData;
-}
-
-function parseValue(value) { // function to parse the value to the correct type
-    // Try to parse as float
-    if (!isNaN(value) && value.trim() !== '') {
-        return parseFloat(value);
-    }
-    // Check for boolean values
-    if (value.toLowerCase() === 'true') {
-        return true;
-    }
-    if (value.toLowerCase() === 'false') {
-        return false;
-    }
-    // Return the original string if no conversion is possible
-    return value;
-}
+/**
+ * This script will always run in the background, periodically executing other scripts.
+ * - It will scan all servers and log the data to a file
+ * - It will nuke servers when possible
+ * - It will determine how to distribute available resources (RAM, etc.) and execute hacking scripts
+ * - (optional) It will purchase and upgrade servers
+ * 
+ * Usage: 
+ * run manager.js <args>
+ * Args:
+ * - 'u:<minutes>' to set the update interval in minutes
+ * - 'm:false' to not spend money
+ */
 
 export async function main(ns) {
-    // ------------------ variables ------------------
-    let updateInterval = 1000 * 60 * 60; // 60 minutes by default. interval for updating data
-    let spendMoney = true; // by default we spend money
-    for (let i = 0; i < ns.args.length; i++) {
-        // we can have several args that consist of a string, a colon and a value. Like this "u:60" for update interval of 60 minutes. 
-        // args:
-        // u = update interval in minutes
-        // m = spend money? if true we can spend money on purchasing servers and other things
-        if (ns.args[i].includes(':')) {
-            let arg = ns.args[i].split(':');
-            if (arg[0] === 'u') { // update interval
-                updateInterval = 1000 * 60 * arg[1];
-            }
-            if (arg[0] === 'm') { // spend money
-                if (arg[1] === 'false') {
-                    spendMoney = false;
-                }
-            }
-        }
-        // if run with 'help' as the first argument, we print the help text and exit
-        if (ns.args[0] === 'help') {
-            ns.tprint("Usage: run manager.js <args>");
-            ns.tprint("Args:");
-            ns.tprint("- 'u:<minutes>' to set the update interval in minutes");
-            ns.tprint("- 'm:false' to not spend money");
-            return;
-        }
+    // ------------------ check arguments ------------------
+    if (ns.args.length === 0) { // if no arguments are passed, print help
+        ns.tprint("Usage: run manager.js <args>");
+        ns.tprint("Args:");
+        ns.tprint("- 'u:<minutes>' to set the update interval in minutes");
+        ns.tprint("- 'm:false' to not spend money");
+        return;
     }
-    if (!isNaN(ns.args[0])) { // if first arg is a number, we set the update interval to that number of minutes
-        updateInterval = 1000 * 60 * ns.args[0];
-    }
-    const restartHackInterval = 1000 * 60 * 60; // 1 hour. interval for killing and restarting hacking scripts
-    // todo: implement the restart hack interval. The idea is that I check every 5 minutes and start new hacking scripts wherever there is a newly hackable server with free RAM.
-    //       Only once an hour or so I kill all running hacking scripts and restart them to distribute the threads hopefully more cleverly. 
-    let restartTimer = Date.now(); // initialize restart timer // todo: implement restart timer
-    const freeRAMonHome = 50 // gb of RAM we want to keep free on home server
-    const hack_file = "hack_simple_3.js"; // usage: execute with ns.exec(script, target, threads, arg1, arg2, ...)
-    const servers_file = "data/servers_current.txt";
-    const script_ram = ns.getScriptRam(hack_file); // ram usage of the hack script
-    // available columns: let serverDataHeader = [['date time', 'pos.', 'scanned', 'hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'ramUsed', 
-    // 'purchasedByPlayer', 'moneyAvailable', 'moneyMax', 'hackDifficulty', 
-    // 'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth', 'files', 'hackable', 'serverGrowth', 'Cores', 'moneyPercent', 'serverValue']];
 
-    // check if periodic_scan.js is running. if not, start it
+    // ------------------ variables ------------------
+    const updateInterval = 1000 * 60 * (getArgValue(args, "u") || 20); // get update interval in minutes. Default is 20 minutes
+    const spendMoney = getArgValue(args, "m") || true; // do we spend money? Default is true
+    const freeRAMonHome = 50 // gb of RAM we want to keep free on home server for other scripts
+    const serversFile = "data/servers_current.txt";
+    const hackFile = "hack.js";
+    const scanFile = "scan.js";
+    const budgetFactorPurchaseServers = 0.9; // we spend at most 90% of our money on servers
+
+    // ------------------ check data and files ------------------
+    // If we just started (i.e. our hacking level is 1), we remove the servers file to reset the log data
+    if (ns.getHackingLevel() === 1) {
+        ns.rm("data/servers.txt");
+    }
+
+    // Check if periodic_scan.js is running. If not, start it
     if (!ns.scriptRunning('periodic_scan.js', 'home')) {
         ns.run('periodic_scan.js');
     }
 
+    // ------------------ main ------------------
     while (true) {
+        // ------------------ variables ------------------
+        let purchaseServersBudget = ns.getServerMoneyAvailable('home') * budgetFactorPurchaseServers; // we spend at most 90% of our money on servers
+
         // ------------------ update cycle ------------------
-        // we run all scripts that provide us with the data we need
-
-        ns.run('scan.js'); // scan all servers with scan.js to update the `servers_current.txt` file
-        await ns.sleep(10); // wait for scan.js to finish
-        ns.exec("hack_all.js", "home", 1, "nuke"); // nuke all servers
-        await ns.sleep(10); // wait for scan.js to finish
-        ns.run('scan.js'); // scan all servers again to see if we have any new hackable servers
-        await ns.sleep(10); // wait for scan.js to finish
-
+        scan(ns, scanFile); // scan all servers with scan.js to update the `servers_current.txt` file
+        nukeServers(ns, serversFile); // nuke all servers
+        
+        // if spend money, purchase and upgrade servers
         if (spendMoney) {
-            ns.run('purchase_server.js', 1, 'purchase'); // purchase servers
-            ns.run('purchase_server.js', 1, 'upgrade'); // upgrade servers
+            scan(ns, scanFile);
+            ns.run('purchase_server.js', 1, purchaseServersBudget); // purchase/upgrade servers
         }
 
-        let serverData = readData(ns, servers_file); // 2d array that will hold all the server data
-        // get the indexes of the following column headers so we can address them by name
-
-        let index_hostname = serverData[0].indexOf('hostname');
-        let index_purchasedByPlayer = serverData[0].indexOf('purchasedByPlayer');
-        let index_hackable = serverData[0].indexOf('hackable');
-        let index_serverValue = serverData[0].indexOf('serverValue');
-        let index_maxRam = serverData[0].indexOf('maxRam');
-
-        // ------------------ do some logic and execute scripts to start hacking from our purchased servers ------------------
-
-        // let's go add up all the ram that we have available to us first on our home server (-20 gb for other random scripts) and all the purchased servers
-        let totalRunnableThreads = Math.floor((ns.getServerMaxRam('home') - freeRAMonHome) / script_ram); // 50 gb for other random scripts
-        if (totalRunnableThreads < 0) {
-            totalRunnableThreads = 0;
-        }
-        for (let i = 1; i < serverData.length; i++) {
-            // we divide the available ram on the server by the ram required of the hack script and floor the value. 
-            // this is to prevent us calculating with the unusable, tiny last portion of ram on each server
-            if (serverData[i][index_purchasedByPlayer] === true) {
-                totalRunnableThreads += Math.floor((serverData[i][index_maxRam] - 0) / script_ram); // 0 gb for other random scripts reserved
-            }
-        }
-
-        // we take the top 10 most valuable servers and assign the value as a percentage of the total value of those top 10 servers to a new column
-        // to do this we first sum the total value of those top 10 servers
-        let toHackServersTotalValue = 0; // total value of all the servers that we want to hack
-        // we first discard all servers that are not hackable
-        let toHackServers = serverData.slice(1).filter(server => server[index_hackable] === true);
-        for (let i = 0; i < toHackServers.length; i++) {
-            toHackServersTotalValue += toHackServers[i][index_serverValue];
-        }
-        // now we can add the percentage value to the toHackServers array in a new column
-        for (let i = 0; i < toHackServers.length; i++) {
-            toHackServers[i].push(toHackServers[i][index_serverValue] / toHackServersTotalValue);
-        }
-        toHackServers.unshift(serverData[0]); // we should probably add the header back again so we can index it. we can copy it from the serverData array
-        toHackServers[0].push('percentageValue'); // now we add the new column to the end of the header
-        let index_percentageValue = toHackServers[0].indexOf('percentageValue'); // now we have the index of the new column
-        // now we have the top 10 servers and their percentage value in the toHackServers array
-
-        // we now know the total runnable threads and the top 10 servers and their percentage value how we want to distribute the threads
-        // let's go and distribute the threads using math.floor() on the threads just in case
-        toHackServers[0].push('threads'); // add a new column to the header
-        let index_threads = toHackServers[0].indexOf('threads'); // get the index of the new column
-        for (let i = 1; i < toHackServers.length; i++) {
-            toHackServers[i].push(Math.floor(totalRunnableThreads * toHackServers[i][index_percentageValue]));
-        }
-
-        // now we need to kill all running hack scripts. 
-        // We specifically include only hack scripts so that periodic_scan.js and other such scripts are not killed
-
-        // for each server, if it is 'home' or a purchased server
-        //   we get a list of all processes using ns.ps()
-        //   if the process file name includes "hack" we kill it with ns.kill()
-        for (let i = 1; i < serverData.length; i++) {
-            if (serverData[i][index_purchasedByPlayer] === 'true' || serverData[i][index_hostname] === 'home') {
-                let processes = ns.ps(serverData[i][index_hostname]);
-                // ns.tprint(`proccesses on server ${serverData[i][index_hostname]}: ${processes}`);
-                for (let j = 0; j < processes.length; j++) {
-                    if (processes[j].filename.includes('hack')) {
-                        ns.kill(processes[j].pid);
-                    }
-                }
-            }
-        }
-
-        // now we can run the hack scripts on the servers
-        // we iterate through all the purchased servers as well as 'home'
-
-        let totalThreads = 0; // total threads that we have to distribute over the servers
-        for (let i = 1; i < toHackServers.length; i++) {
-            totalThreads += toHackServers[i][index_threads];
-        }
-
-        // now we can start running the hacking scripts on the servers
-        // we start with 'home' and then iterate through the purchased servers
-        let remainingThreads = totalThreads;
-        let i_h = toHackServers.length - 1; // start with the last server. index of the toHackServers array
-        let purchasedServers = serverData.slice(1).filter(server => server[index_purchasedByPlayer] === true); // we build a new array with only our purchased servers
-        let i_p = 1; // start with 'home'. index of the purchasedServers array
-
-        // we add the header to the purchasedServers array
-        purchasedServers.unshift(serverData[0]);
-
-        // we go through all the purchased servers and calculate how many threads they could run depending on the script ram and their available ram
-        let indexThreadsPurchasedServers = purchasedServers[0].indexOf('threads'); // get the index of the new column
-        for (let i = 1; i < purchasedServers.length; i++) {
-            purchasedServers[i].push(''); // add a new column to the end of the array for percentageValue
-            if (purchasedServers[i][index_hostname] === 'home') {
-                purchasedServers[i].push(Math.floor((ns.getServerMaxRam('home') - freeRAMonHome) / script_ram)); // 50 gb for other random scripts
-            } else {
-                purchasedServers[i].push(Math.floor((purchasedServers[i][index_maxRam] - 0) / script_ram)); // 0 gb for other random scripts reserved
-            }
-
-            // while we're at it, let's remove the hack script from the server and copy a new version of it to the server
-            // skip 'home' as we don't want to remove the hack script from there
-            if (purchasedServers[i][index_hostname] !== 'home') {
-                ns.rm(hack_file, purchasedServers[i][index_hostname]);
-                ns.scp(hack_file, purchasedServers[i][index_hostname]);
-            }
-        }
-
-        let counter = 1; // counter to prevent infinite loops
-        while (remainingThreads > 0) {
-            // if the current purchased server has enough threads available, we run the hack script on it with the given amount of threads
-            // if not, we run the hack script with as many threads as possible and the next server can use the remaining threads
-            if (purchasedServers[i_p][indexThreadsPurchasedServers] > toHackServers[i_h][index_threads]) {
-                if (toHackServers[i_h][index_threads] > 0) { // only if threads are > 0 we run the hack script
-                    // ns.tprint(`running hack script on ${purchasedServers[i_p][index_hostname]} with ${toHackServers[i_h][index_threads]} threads on ${toHackServers[i_h][index_hostname]}`);
-                    ns.exec(hack_file, purchasedServers[i_p][index_hostname], toHackServers[i_h][index_threads], toHackServers[i_h][index_threads], toHackServers[i_h][index_hostname]);
-                    purchasedServers[i_p][indexThreadsPurchasedServers] -= toHackServers[i_h][index_threads];
-                    remainingThreads -= toHackServers[i_h][index_threads];
-                }
-                i_h--; // go to the next toHackServer
-            } else {
-                if (purchasedServers[i_p][indexThreadsPurchasedServers] > 0) { // only if threads are > 0 we run the hack script
-                    // ns.tprint(`running hack script on ${purchasedServers[i_p][index_hostname]} with ${toHackServers[i_h][index_threads]} threads on ${toHackServers[i_h][index_hostname]}`);
-                    ns.exec(hack_file, purchasedServers[i_p][index_hostname], purchasedServers[i_p][indexThreadsPurchasedServers], purchasedServers[i_p][indexThreadsPurchasedServers], toHackServers[i_h][index_hostname]);
-                    toHackServers[i_h][index_threads] -= purchasedServers[i_p][indexThreadsPurchasedServers];
-                    remainingThreads -= purchasedServers[i_p][indexThreadsPurchasedServers];
-                }
-                i_p++; // go to the next purchasedServer
-            }
-            counter++;
-            if (counter > 1000) {
-                ns.tprint("counter exceeded 1000. breaking loop");
-                break;
-            }
-            // todo: figure out why we have a little bit left over. starting with what 300.000 + threads we get to the point where we break with 1438 left. 
-            //       I'm guessing it's a rounding error or something like that. This here should be good enough for now. 
-            if (i_p >= purchasedServers.length) {
-                // ns.tprint("i_p exceeded purchasedServers.length. breaking loop. remaining threads: " + remainingThreads);
-                break;
-            }
-        }
-
-        // ------------------ also run hack_all.js ----------------
-        ns.exec("hack_all.js", "home", 1, "nuke"); // nuke all servers
-        await ns.sleep(100); // wait for nuke to finish, just in case. I'm not sure we actually need it
-        ns.exec("hack_all.js", "home", 1, "hack"); // hack all servers
-        await ns.sleep(500); // wait a bit ...
-        ns.exec("hack_all.js", "home", 1, "hack"); // ... and do it again. Sometimes it seems it only worked after the second time. In any case, this should not hurt. 
+        // #####################################################
+        scan(ns, scanFile); // scan all servers with scan.js to update the `servers_current.txt` file
+        hackOnPurchasedServers(ns, freeRAMonHome, hackFile, scanFile); // hack on all purchased servers
+        hackOnTargetServers(ns); // hack on target servers
 
         await ns.sleep(updateInterval); // wait until the next update cycle
+    }
+}
+
+// ------------------ functions ------------------
+function getArgValue(args, key) { // get the value of the argument key
+    for (let i = 0; i < args.length; i++) {
+        // if the first character of the argument is the key, return the value
+        if (args[i][0] === key) {
+            return args[i].split(':')[1];
+        }
+    }
+    return null;
+}
+
+function scan(ns, scanFile) { // scan all servers
+    ns.run(scanFile);
+}
+
+async function nukeServers(ns, serversFile) { // nuke all servers
+    const serverData = readData(ns, serversFile);
+    const indexHostname = serverData[0].indexOf('hostname');
+    const indexAdmin = serverData[0].indexOf('hasAdminRights');
+
+    for (let row = 1; row < serverData.length; row++) {
+        if (!serverData[row][indexAdmin] && serverHackable(serverData[row])) { // if the server is hackable and we don't have admin rights yet
+            ns.nuke(serverData[row][indexHostname]); // we nuke it
+        }
+    }
+}
+
+function serverHackable(server) { // check if the server is hackable
+    // to check if the server is hackable, we check the following:
+    // - is our hacking level high enough?
+    // - do we have the required ports open?
+    
+    const indexRequiredHackingSkill = server[0].indexOf('requiredHackingSkill');
+    const currentHackingLevel = ns.getHackingLevel();
+    const indexRequiredOpenPorts = server[0].indexOf('numOpenPortsRequired');
+    const openablePorts = getOpenablePorts(ns);
+
+    if (currentHackingLevel >= server[indexRequiredHackingSkill] && openablePorts >= server[indexRequiredOpenPorts]) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function getOpenablePorts(ns) { // get the number of openable ports
+    let openablePorts = 0;
+    if (ns.fileExists('BruteSSH.exe', 'home')) openablePorts++;
+    if (ns.fileExists('FTPCrack.exe', 'home')) openablePorts++;
+    if (ns.fileExists('relaySMTP.exe', 'home')) openablePorts++;
+    if (ns.fileExists('HTTPWorm.exe', 'home')) openablePorts++;
+    if (ns.fileExists('SQLInject.exe', 'home')) openablePorts++;
+    return openablePorts;
+}
+
+function hackOnTargetServers(ns, serversFile) { // hack on target servers
+    let serverData = readData(ns, serversFile);
+    let indexAdmin = serverData[0].indexOf('hasAdminRights');
+    let indexPurchasedByPlayer = serverData[0].indexOf('purchasedByPlayer');
+    let indexHostname = serverData[0].indexOf('hostname');
+    const scriptRam = ns.getScriptRam('hack.js');
+
+    for (let row = 1; row < serverData.length; row++) {
+        if (serverData[row][indexAdmin] && !serverData[row][indexPurchasedByPlayer]) { // if we have admin rights and but the server is not purchased by us
+            let server = ns.getServer(serverData[row][indexHostname]);
+            let ps = ns.ps(serverData[row][indexHostname]);
+
+            for (let p of ps) { // kill all running scripts on the server
+                if (p.filename.includes('hack')) {
+                    ns.kill(p.pid);
+                }
+            }
+
+            // remove, then copy the hack script
+            ns.rm('hack.js', serverData[row][indexHostname]);
+            ns.scp('hack.js', serverData[row][indexHostname]);
+            
+            // calculate the amount of threads we can use and run the hack script
+            let threads = Math.floor((server.maxRam - server.ramUsed) / scriptRam); 
+            ns.exec('hack.js', serverData[row][indexHostname], threads, serverData[row][indexHostname], threads);
+        }
+    }
+}
+
+function hackOnPurchasedServers(ns, freeRAMonHome, hackFile, scanFile) { // hack on all purchased servers
+    let script_ram = ns.getScriptRam(hackFile);
+    let serverData = readData(ns, scanFile);
+    let indexPurchasedByPlayer = serverData[0].indexOf('purchasedByPlayer');
+    let indexMaxRam = serverData[0].indexOf('maxRam');
+    let indexServerValue = serverData[0].indexOf('serverValue');
+    let indexHackable = serverData[0].indexOf('hackable');
+    let indexHostname = serverData[0].indexOf('hostname');
+    let totalRunnableThreads = Math.floor((ns.getServerMaxRam('home') - freeRAMonHome) / script_ram); // calculate available RAM on home server
+
+    // ------------------ calculate total runnable threads ------------------
+    if (totalRunnableThreads < 0) { // just in case our home server has less than what we defined as min free RAM
+        totalRunnableThreads = 0;
+    }
+
+    for (let row = 1; row < serverData.length; row++) {
+        if (serverData[row][indexPurchasedByPlayer] === true) {
+            totalRunnableThreads += Math.floor((serverData[row][indexMaxRam] - 0) / script_ram); // calculate available RAM on purchased servers
+        }
+    }
+
+    // ------------------ calculate server value ------------------
+    let toHackServersTotalValue = 0; // total value of all the servers that we want to hack
+    for (let row = 1; row < serverData.length; row++) {
+        toHackServersTotalValue += serverData[row][indexServerValue];
+    }
+
+    // ------------------ add server value as percentage to array ------------------
+    serverData[0].push('percentageValue'); // add a new column to the header
+    for (let row = 1; row < serverData.length; row++) {
+        serverData[row].push(serverData[row][indexServerValue] / toHackServersTotalValue);
+    }
+    let indexPercentageValue = serverData[0].indexOf('percentageValue'); // get the index of the new column
+
+    // ------------------ calculate threads for each server ------------------
+    let toHackServers = serverData.slice(1).filter(server => server[indexHackable] === true); // filter out servers that are not hackable
+    toHackServers.unshift(serverData[0]); // add the header back again so we can index it
+    toHackServers[0].push('threads'); // add a new column to the header
+    let indexThreads = toHackServers[0].indexOf('threads'); // get the index of the new column
+    for (let row = 1; row < toHackServers.length; row++) {
+        toHackServers[row].push(Math.floor(totalRunnableThreads * toHackServers[row][indexPercentageValue]));
+    }
+
+    // ------------------ kill running scripts ------------------
+    for (let row = 1; row < serverData.length; row++) {
+        if (serverData[row][indexPurchasedByPlayer] === true || serverData[row][indexHostname] === 'home') {
+            let processes = ns.ps(serverData[row][indexHostname]);
+            for (let process of processes) {
+                if (process.filename.includes('hack')) { // kill all hacking processes
+                    ns.kill(process.pid);
+                }
+                if (serverData[row][indexHostname] !== 'home') { // remove the hack script from all servers except 'home' anc copy a new version of it to the server
+                    ns.rm(hackFile, serverData[row][indexHostname]);
+                    ns.scp(hackFile, serverData[row][indexHostname]);
+                }
+            }
+        }
+    }
+
+    // ------------------ run hack scripts ------------------
+    let remainingThreads = totalRunnableThreads;
+    let iH = 1; // Index to the current server we're executing hacking scripts on
+    let purchasedServers = serverData.slice(1).filter(server => server[indexPurchasedByPlayer] === true); // we build a new array with only our purchased servers
+    purchasedServers.unshift(serverData[0]); // we add the header to the purchasedServers array
+    let iP = 1; // Index to the current purchased server we're executing hacking scripts on
+
+    let counter = 1; // counter to prevent infinite loops, just in case we mess up something
+    while (remainingThreads > 0) {
+        // if the current purchased server has enough threads available, we run the hack script on it with the given amount of threads
+        if (purchasedServers[iP][indexThreads] > toHackServers[iH][indexThreads]) {
+            if (toHackServers[iH][indexThreads] > 0) { // only if threads are > 0 we run the hack script
+                ns.exec(hackFile, purchasedServers[iP][indexHostname], toHackServers[iH][indexThreads], toHackServers[iH][indexHostname], toHackServers[iH][indexThreads]);
+                purchasedServers[iP][indexThreads] -= toHackServers[iH][indexThreads];
+                remainingThreads -= toHackServers[iH][indexThreads];
+            }
+            iH++; // go to the next toHackServer
+        } else { // if not, we run the hack script with as many threads as possible and the next server can use the remaining threads
+            if (purchasedServers[iP][indexThreads] > 0) { // only if threads are > 0 we run the hack script
+                ns.exec(hackFile, purchasedServers[iP][indexHostname], purchasedServers[iP][indexThreads], toHackServers[iH][indexHostname], purchasedServers[iP][indexThreads]);
+                toHackServers[iH][indexThreads] -= purchasedServers[iP][indexThreads];
+                remainingThreads -= purchasedServers[iP][indexThreads];
+            }
+            iP++; // go to the next purchasedServer
+        }
+        counter++;
+        if (counter > 1000 || iP >= purchasedServers.length || iH >= toHackServers.length) {
+            ns.tprint("Error 2053: Counter exceeded 1000 or index exceeded array length. Breaking loop.");
+            break;
+        }
+    }
+}
+
+function serverHackable(target, serverData) { // check if the target server is hackable
+    const index_hostname = serverData[0].indexOf('hostname');
+    const index_admin = serverData[0].indexOf('hasAdminRights');
+
+    for (let i = 1; i < serverData.length; i++) {
+        if (serverData[i][index_hostname] === target) {
+            if (serverData[i][index_admin]) {
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 }

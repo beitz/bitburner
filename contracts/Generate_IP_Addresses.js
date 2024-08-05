@@ -44,6 +44,7 @@ export async function main(ns) {
     handleContractResult(ns, reward, contractFile, host, isTestMode);
 }
 
+// ------------------ functions ------------------
 function generateValidIPAddresses(inputData) { // Generate all possible valid IP addresses from a string
     /**
      * This function generates all possible valid IP addresses from a given string.

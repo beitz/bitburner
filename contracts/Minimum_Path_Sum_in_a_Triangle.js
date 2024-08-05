@@ -49,6 +49,7 @@ export async function main(ns) {
     handleContractResult(ns, reward, contractFile, host, isTestMode);
 }
 
+// ------------------ functions ------------------
 function findMinimumPathSum(triangle) { // Finds the minimum path sum in a triangle from top to bottom
     /**
      * This function finds the minimum path sum in a triangle from top to bottom.

@@ -54,6 +54,7 @@ export async function main(ns) {
     }
 }
 
+// ------------------ functions ------------------
 function initializeContractScripts(ns, contractScriptsFile) { // initialize the contractScriptsFile with the contract types
     let contractData = [["contract type", "script file", "status"]]; // header of the 2d array
     let contracts = ns.codingcontract.getContractTypes(); // list of all contract types
@@ -69,8 +70,8 @@ function initializeContractScripts(ns, contractScriptsFile) { // initialize the 
 
 function listContracts(ns, serverData) { // list all contracts on all servers
     for (let row = 1; row < serverData.length - 1; row++) {
-        let index_hostname = serverData[0].indexOf('hostname');
-        let hostname = serverData[row][index_hostname];
+        let indexHostname = serverData[0].indexOf('hostname');
+        let hostname = serverData[row][indexHostname];
         let files = ns.ls(hostname);
         for (let file of files) {
             if (file.includes("contract-")) {

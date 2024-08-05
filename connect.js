@@ -48,12 +48,13 @@ export async function main(ns) {
     ns.tprint(connectionString);
 }
 
+// ------------------ functions ------------------
 function findServerRow(serverData, hostname) { // Finds the row of the target server in the server data
-    const index_hostname = serverData[0].indexOf('hostname');
+    const indexHostname = serverData[0].indexOf('hostname');
 
-    for (let i = 1; i < serverData.length; i++) {
-        if (serverData[i][index_hostname] === hostname) {
-            return i;
+    for (let row = 1; row < serverData.length; row++) {
+        if (serverData[row][indexHostname] === hostname) {
+            return row;
         }
     }
 
@@ -61,16 +62,16 @@ function findServerRow(serverData, hostname) { // Finds the row of the target se
 }
 
 function buildConnectionString(serverData, targetServerRow) { // Builds connection string to target server
-    const index_hostname = serverData[0].indexOf('hostname');
-    const index_depth = serverData[0].indexOf('depth');
-    let connectionString = `connect ${serverData[targetServerRow][index_hostname]}; `; // initialize with the target server
-    let currentDepth = serverData[targetServerRow][index_depth];
+    const indexHostname = serverData[0].indexOf('hostname');
+    const indexDepth = serverData[0].indexOf('depth');
+    let connectionString = `connect ${serverData[targetServerRow][indexHostname]}; `; // initialize with the target server
+    let currentDepth = serverData[targetServerRow][indexDepth];
 
-    for (let i = targetServerRow; i > 0; i--) {
-        if (serverData[i][index_depth] < currentDepth) {
+    for (let row = targetServerRow; row > 0; row--) {
+        if (serverData[row][indexDepth] < currentDepth) {
             // we add the next server to the beginning of the string
-            connectionString = `connect ${serverData[i][index_hostname]}; ` + connectionString;
-            currentDepth = serverData[i][index_depth];
+            connectionString = `connect ${serverData[row][indexHostname]}; ` + connectionString;
+            currentDepth = serverData[row][indexDepth];
         }
     }
 
