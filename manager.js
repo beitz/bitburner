@@ -97,33 +97,6 @@ async function nukeServers(ns, serversFile) { // nuke all servers
     }
 }
 
-function serverHackable(server) { // check if the server is hackable
-    // to check if the server is hackable, we check the following:
-    // - is our hacking level high enough?
-    // - do we have the required ports open?
-    
-    const indexRequiredHackingSkill = server[0].indexOf('requiredHackingSkill');
-    const currentHackingLevel = ns.getHackingLevel();
-    const indexRequiredOpenPorts = server[0].indexOf('numOpenPortsRequired');
-    const openablePorts = getOpenablePorts(ns);
-
-    if (currentHackingLevel >= server[indexRequiredHackingSkill] && openablePorts >= server[indexRequiredOpenPorts]) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-function getOpenablePorts(ns) { // get the number of openable ports
-    let openablePorts = 0;
-    if (ns.fileExists('BruteSSH.exe', 'home')) openablePorts++;
-    if (ns.fileExists('FTPCrack.exe', 'home')) openablePorts++;
-    if (ns.fileExists('relaySMTP.exe', 'home')) openablePorts++;
-    if (ns.fileExists('HTTPWorm.exe', 'home')) openablePorts++;
-    if (ns.fileExists('SQLInject.exe', 'home')) openablePorts++;
-    return openablePorts;
-}
-
 function hackOnTargetServers(ns, serversFile) { // hack on target servers
     let serverData = readData(ns, serversFile);
     let indexAdmin = serverData[0].indexOf('hasAdminRights');

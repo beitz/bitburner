@@ -24,7 +24,7 @@ export async function main(ns) {
     const isTestMode = ns.args[0] === "test";
 
     if (isTestMode) {
-        ({ contractFile, host, inputData } = createTestContract(ns, "Generate IP Addresses"));
+        [contractFile, host, inputData] = createTestContract(ns, "Generate IP Addresses");
     } else if (ns.args.length === 2) {
         [contractFile, host, inputData] = getContractData(ns, ns.args[0], ns.args[1]);
     } else {

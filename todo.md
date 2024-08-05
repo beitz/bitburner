@@ -10,7 +10,7 @@ here is a short outline of what I want to work on
 | utils/contractUtils.js | ✔ |  |
 | utils/utils.js | ✔ |  |
 | connect.js | ✔ |  |
-| contracts.js |  | test |
+| contracts.js | ✔ |  |
 | hack.js |  | test |
 | manager.js |  | test |
 | periodic_scan.js |  | Refactor maybe? |

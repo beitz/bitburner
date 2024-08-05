@@ -8,7 +8,7 @@ export function createTestContract(ns, contractType) { // Create a dummy contrac
     const contractFile = ns.codingcontract.createDummyContract(contractType);
     const host = 'home';
     const inputData = ns.codingcontract.getData(contractFile, host);
-    return { contractFile, host, inputData };
+    return [contractFile, host, inputData];
 }
 
 export function getContractData(ns, contractFile, host) { // Get contract data from a file on a host
@@ -23,7 +23,7 @@ export function getContractData(ns, contractFile, host) { // Get contract data f
     }
 
     const inputData = ns.codingcontract.getData(contractFile, host);
-    return { contractFile, host, inputData };
+    return [contractFile, host, inputData];
 }
 
 export function handleContractResult(ns, reward, contractFile, host, isTestMode) { // Handle the result of a contract
