@@ -44,7 +44,7 @@ export async function main(ns) {
     }
     contractData = readData(ns, contractScriptsFile);
 
-    let serverData = readData(ns, "data/servers_current.txt"); // 2d array containing the server data
+    let serverData = readData(ns, "data/servers.txt"); // 2d array containing the server data
 
     // ------------------ main ------------------
     if (action === 'list') {

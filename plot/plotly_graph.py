@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 
 # Get the directory of the current script and the data file
 script_dir = os.path.dirname(os.path.abspath(__file__))
-data_file_path = os.path.join(script_dir, 'servers.txt')
+data_file_path = os.path.join(script_dir, 'servers_log.txt')
 
 # Load the data
 data = pd.read_csv(data_file_path, delimiter='|')

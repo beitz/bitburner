@@ -61,3 +61,27 @@ export function getDateTime() { // Function that returns the current date and ti
     var timeFormatted = now.toLocaleTimeString(`sv`);
     return `${dateFormatted} ${timeFormatted}`;
 }
+
+export function debugPrint(ns, data, text = '') { // debug print to terminal
+    // if data is 2d array, print each row in new line
+    // if data is 1d array, print each item in new line
+    // if data is string or number or anything else, print it
+
+    ns.tprint("\n\n --- " + text + " --- \n");
+
+    if (data === undefined) {
+        ns.tprint("Data is undefined.");
+        return;
+    }
+    if (data.length > 0 && Array.isArray(data[0])) {
+        for (let i = 0; i < data.length - 1; i++) {
+            ns.tprint(data[i]);
+        }
+    } else if (Array.isArray(data)) {
+        for (let i = 0; i < data.length - 1; i++) {
+            ns.tprint(data[i]);
+        }
+    } else {
+        ns.tprint(data);
+    }
+}

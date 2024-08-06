@@ -35,7 +35,6 @@ export async function main(ns) {
     const serverDataFile = 'data/servers.txt';
     const serverDataLogFile = 'data/servers_log.txt';
     let serverData = []; // 2d array that will hold all the server data
-    let servers = []; // array that will hold the servers we get from the scan function
     let serverDataHeader = [['date time', 'pos.', 'scanned', 'hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'ramUsed',
         'purchasedByPlayer', 'moneyAvailable', 'moneyMax', 'hackDifficulty',
         'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth', 'files', 'hackable', 'serverGrowth', 'Cores', 'moneyPercent', 'serverValue']];
@@ -45,11 +44,11 @@ export async function main(ns) {
 
     scanServers(ns, serverData);
 
-    saveServerData(ns, serverDataFile, serverDataLogFile, serverData, log);
+    saveServerData(ns, serverDataFile, serverDataLogFile, serverData, serverDataHeader, log);
 }
 
 // ------------------ functions ------------------
-function isHackable(server) { // function to determine if a server is hackable
+function isHackable(ns, server) { // function to determine if a server is hackable
     // we determine the amountof ports we can open and how many open ports we need on target server
     // we also determine the hack difficulty of the server and compare it to the player's hacking level
     let openablePorts = 0;
@@ -90,6 +89,7 @@ function scanServers(ns, serverData) { // function to scan all servers in the ne
     serverData.unshift([getDateTime(), '-1', true, 'home']); // we add the 'home' server to the top of the serverData array
 
     while (true) {
+        let servers = [];
         if (serverData.length === 1) { // in the first loop we start by scanning the home server
             servers = ns.scan("home");
             for (let i = 0; i < servers.length; i++) { // here we add all the first set of servers to the serverData array
@@ -120,8 +120,10 @@ function scanServers(ns, serverData) { // function to scan all servers in the ne
     }
 }
 
-function saveServerData(ns, serverDataFile, serverDataLogFile, serverData, log) { // function to save the server data to a file
-    for (let row = 0; row < serverData.length; row++) {
+function saveServerData(ns, serverDataFile, serverDataLogFile, serverData, serverDataHeader, log) { // function to save the server data to a file
+    serverData.unshift(serverDataHeader[0]); // let's add the server data header first
+    
+    for (let row = 1; row < serverData.length; row++) {
         // server data headers atm: [0] date time, [1] position, [2] scanned, [3] hostname
         let server = ns.getServer(serverData[row][3]);
         let hostname = serverData[row][3];
@@ -140,7 +142,7 @@ function saveServerData(ns, serverDataFile, serverDataLogFile, serverData, log) 
         newServerData[14] = server.requiredHackingSkill; // required hacking skill to hack the server
         newServerData[15] = serverData[row][1].split('.').length - 1; // depth of the server in the network
         newServerData[16] = ns.ls(hostname); // files on the server
-        newServerData[17] = isHackable(server); // true if the server is hackable
+        newServerData[17] = isHackable(ns, server); // true if the server is hackable
         newServerData[18] = server.serverGrowth; // server growth
         newServerData[19] = server.cpuCores; // number of CPU cores
         newServerData[20] = server.moneyAvailable / server.moneyMax; // percentage of money available on the server
@@ -149,7 +151,7 @@ function saveServerData(ns, serverDataFile, serverDataLogFile, serverData, log) 
         serverData[row] = newServerData;
     }
 
-    // now we can store all of that in the servers.txt file so other scripts can use it for something
+    // now we can store all of that in the servers_log.txt file so other scripts can use it for something
     writeData(ns, serverDataFile, serverData);
     if (log) writeData(ns, serverDataLogFile, serverData, 'a');
 }

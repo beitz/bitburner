@@ -1,17 +1,18 @@
 /** @param {NS} ns **/
 
-import { readData } from 'utils/utils.js';
+import { readData, debugPrint } from 'utils/utils.js';
 
 /**
  * This script prints server information in the terminal in a nicely formatted way.
  * 
  * Usage: 
- * run print_servers.js <args>
+ * run print_servers.js print <args>
  * Arguments: 
  * - help: prints the usage of this script and shows what columns are available
  * - <column>: choose which columns to show. For boolean columns, you can add ':true' or ':false' to only show servers with that value.
  */
 
+// todo: filtering rows doesn't work anymore. fix that. 
 // todo: add ability to print purchased servers? 
 
 const shortenedHeader = [
@@ -40,34 +41,57 @@ const shortenedHeader = [
 
 export async function main(ns) {
     // ------------------ check arguments ------------------
-    const serversFile = "data/servers_current.txt";
+    const serversFile = "data/servers.txt";
 
     if (ns.args.length === 0 || ns.args[0] === 'help') {
-        ns.tprint("Usage: run print_servers.js <args>");
+        ns.tprint("Usage: run print_servers.js print <args>");
         ns.tprint("Arguments:");
         ns.tprint("help: prints the usage of this script and shows what columns are available");
         ns.tprint("<column>: choose which columns to show.");
         ns.tprint("          For boolean columns, you can add ':true' or ':false' to only show servers with that value.");
+        ns.tprint("Available columns: " + shortenedHeader.map(x => x[0]).join(', '));
         return;
     } else if (!ns.args.includes('print')) {
         ns.tprint("Error 44793: No 'print' argument provided.");
         return;
     }
+    let args = ns.args.filter(x => x !== 'print'); // remove 'print' from the arguments
 
     // ------------------ variables ------------------
-    let serverData = readData(serversFile); // 2d array with server data
-    let printColumnData = parseColumns(ns.args); // 2d array with |printColumns|filters|type|
+    let serverData = readData(ns, serversFile); // 2d array with server data
+    parseArgs(args); // add default column if empty
+    let printColumnData = parseColumns(args); // 2d array with |printColumns|filters|type|
 
     // ------------------ main ------------------
     addTreeStructure(serverData);
-    filterData(serverData, printColumnData); // remove unused/filtered columns/rows
+    filterColumns(serverData, printColumnData);
+    filterRows(serverData, printColumnData);
     formatServerData(serverData, shortenedHeader); // replace headers with shortened headers and format data
-    let columnLengths = getColumnLengths(serverData); // 1d array with the max length of each column
-
+    let columnLengths = getColumnLengths(ns, serverData); // 1d array with the max length of each column
     printServerData(ns, serverData, printColumnData, columnLengths, shortenedHeader); // print the filtered server data to terminal
 }
 
 // ------------------ functions ------------------
+function parseArgs(args) { // takes 1d array with arguments and adds default column headers if empty
+    // if 'hostname' is not provided, add it
+    if (!args.includes('hostname')) {
+        args.unshift('hostname');
+    }
+
+    // if we only have hostname as the only argument, we add some default columns
+    if (args.length === 1) {
+        args.push('hasAdminRights');
+        args.push('numOpenPortsRequired');
+        args.push('maxRam');
+        args.push('ramUsed');
+        args.push('purchasedByPlayer');
+        args.push('moneyMax');
+        args.push('requiredHackingSkill');
+        args.push('hackable');
+        args.push('moneyPercent');
+    }
+}
+
 function parseColumns(args) { // takes 1d array of arguments and returns 2d array with |printColumns|filters|
     // we take a 1d array with arguments
     // those arguments can look like this `['hostname', 'hasAdminRights:true', 'numOpenPortsRequired', etc.]`
@@ -79,14 +103,8 @@ function parseColumns(args) { // takes 1d array of arguments and returns 2d arra
     for (let row = 0; row < args.length; row++) {
         let column = args[row].split(':');
         let columnName = column[0];
-        let columnValue = column[1];
+        let columnValue = parseValue(column[1]);
         let columnType = typeof columnValue;
-
-        if (columnValue === 'true') {
-            columnValue = true;
-        } else if (columnValue === 'false') {
-            columnValue = false;
-        }
 
         columnData.push([columnName, columnValue, columnType]);
     }
@@ -95,16 +113,16 @@ function parseColumns(args) { // takes 1d array of arguments and returns 2d arra
 }
 
 function addTreeStructure(serverData) { // takes 2d array with server data and adds tree structure to the hostname column
-    let hostname = serverData[row][serverData[0].indexOf('hostname')];
-    let thisRowDepth = serverData[row][serverData[0].indexOf('depth')];
-    let nextRowDepth = serverData[row+1][serverData[0].indexOf('depth')];
-
     let verticalLine = '│';
     let cornerLine = '└';
     let siblingLine = '├';
     let horizontalLine = '─';
-    
-    for (let row = 1; row < serverData.length; row++) {
+
+    for (let row = 1; row < serverData.length - 1; row++) {
+        let hostname = serverData[row][serverData[0].indexOf('hostname')];
+        let thisRowDepth = serverData[row][serverData[0].indexOf('depth')];
+        let nextRowDepth = serverData[row + 1][serverData[0].indexOf('depth')];
+
         let tree = '';
 
         for (let i = 0; i < thisRowDepth; i++) {
@@ -121,60 +139,70 @@ function addTreeStructure(serverData) { // takes 2d array with server data and a
     }
 }
 
-function filterData(serverData, printColumnData) { // takes 2d array with server data and removes unused columns
+function filterColumns(serverData, printColumnData) { // takes 2d array with server data and removes unused columns
     // ------------------ remove columns ------------------
-    for (let row = 0; row < serverData.length; row++) { // go through each row ...
-        for (let col = 0; col < serverData[0].length; col++) { // ... and each column of the server Data
-            let serverColumnName = serverData[0][col];
-            // let serverColumnValue = serverData[row][col];
-            // let serverColumnType = typeof columnValue;
-            let removeColumn = true;
+    // we create a 1d array that contains the columns we want to remove
+    let columnsToRemove = [];
+    for (let i = 0; i < serverData[0].length - 1; i++) { // for each column in the header row
+        let serverColumnName = serverData[0][i];
+        let removeColumn = true;
 
-            for (let i = 0; i < printColumnData.length; i++) { // we compare each value with each of the filter values
-                let columnName = printColumnData[i][0];
-                // let columnFilter = printColumnData[i][1];
-                // let columnType = printColumnData[i][2];
+        for (let j = 0; j < printColumnData.length; j++) { // we compare each value with each of the filter values
+            let columnName = printColumnData[j][0];
 
-                if (serverColumnName === columnName) { // if the column name is the same as the filter column name
-                    removeColumn = false; // we found the column, so we keep it
-                    continue; // we found the column, so we keep it
-                }
+            if (serverColumnName === columnName) { // if the column name is the same as the filter column name
+                removeColumn = false; // we found the column, so we keep it
+                continue; // we found the column, so we keep it
             }
-            if (removeColumn) { // remove column
-                serverData[row].splice(col, 1); // remove the column
-            }
+        }
+        if (removeColumn) { // remove column
+            columnsToRemove.push(i); // add the column index to the columnsToRemove array
         }
     }
 
+    // now we remove the columns from the serverData array
+    for (let row = 0; row < serverData.length - 1; row++) {
+        for (let i = columnsToRemove.length; i >= 0; i--) {
+            serverData[row].splice(columnsToRemove[i] - 1, 1);
+        }
+    }
+}
+
+function filterRows(serverData, printColumnData) { // takes 2d array with server data and removes unused rows
     // ------------------ filter rows ------------------
-    for (let row = 0; row < serverData.length; row++) { // go through each row ...
-        let removeRow = true;
+    for (let row = serverData.length - 1; row >= 1; row--) { // go through each row ...
+        let removeRow = false;
 
         for (let col = 0; col < serverData[0].length; col++) { // ... and each column of the server Data
             let serverColumnName = serverData[0][col];
             let printColumnRow = printColumnData.find(x => x[0] === serverColumnName);
-            let columnType = printColumnRow[2];
 
-            if (columnType === 'boolean') { // if the column type is boolean
-                // check if the column value is the same as the filter value, if yes keep it, if not remove the row
-                if (parseValue(serverData[row][col]) === parseValue(printColumnRow[1])) {
-                    removeRow = false; // we found a row that we want to keep
-                    continue; // we found a row that we want to keep
+            if (printColumnRow) { // check if we found the column header in the printColumnData array
+                let columnType = printColumnRow[2];
+
+                if (columnType === 'boolean') { // if the column type is boolean
+                    // check if the column value is the same as the filter value, if yes keep it, if not remove the row
+                    if (parseValue(serverData[row][col]) !== parseValue(printColumnRow[1])) {
+                        removeRow = true; // we found a row that we want to remove
+                        continue;
+                    }
                 }
+                // todo: add the same logic for numbers
+            } else {
+                removeRow = true; // we remove the row
             }
-            // todo: add the same logic for numbers
         }
-        if (removeRow) { // remove row
+        if (removeRow) {
             serverData.splice(row, 1); // remove the row
         }
     }
 }
 
 function parseValue(value) { // takes a value and returns the value as a boolean or number
-    if (value === 'true') {
+    if (value === 'true' || value === true) {
         return true;
     }
-    if (value === 'false') {
+    if (value === 'false' || value === false) {
         return false;
     }
     if (!isNaN(value)) {
@@ -208,13 +236,13 @@ function formatServerData(serverData, shortenedHeader) { // takes 2d array with 
     }
 }
 
-function getColumnLengths(serverData) { // takes 2d array with server data and returns 1d array with the max length of each column
+function getColumnLengths(ns, serverData) { // takes 2d array with server data and returns 1d array with the max length of each column
     let columnLengths = [];
 
-    for (let row = 0; row < serverData.length; row++) {
+    for (let row = 0; row < serverData.length - 1; row++) {
         for (let col = 0; col < serverData[0].length; col++) {
             if (columnLengths[col] === undefined) columnLengths[col] = 0;
-            if (serverData[row][col].toString().length > columnLengths[col]) {
+            if (serverData[row][col].toString().length > columnLengths[col]) { // <----- this serverData[row][col] is undefined?!
                 columnLengths[col] = serverData[row][col].toString().length;
             }
         }
@@ -228,28 +256,24 @@ function printServerData(ns, serverData, columnData, columnLengths, shortenedHea
 
     let spacing = 2; // spacing between columns
 
-    for (let row = 0; row < serverData.length; row++) {
+    for (let row = 0; row < serverData.length - 1; row++) {
         let printedRow = '';
         for (let col = 0; col < serverData[0].length; col++) {
-            if (row === 0) { // in the header row we align everything to the left
-                printedRow += shortenedHeader[col].toString().padEnd(columnLengths[col] + spacing, ' ');
+            if (getFullName(serverData[0][col], shortenedHeader) === 'hostname') { // for the hostname column we align left
+                printedRow += serverData[row][col].toString().padEnd(columnLengths[col] + spacing, ' ');
             } else {
-                if (col === getIndexOfColumn('hostname', shortenedHeader)) { // for the hostname column we align left
-                    printedRow += serverData[row][col].toString().padEnd(columnLengths[col] + spacing, '_');
-                } else {
-                    printedRow += serverData[row][col].toString().padStart(columnLengths[col] + spacing, ' ');
-                }
+                printedRow += serverData[row][col].toString().padStart(columnLengths[col] + spacing, ' ');
             }
         }
+        ns.tprint(printedRow);
     }
 }
 
-function getIndexOfColumn(name, shortenedHeader) { // takes a name and the shortened header array and returns the index of the column
+function getFullName(name, shortenedHeader) { // takes a short or full name and returns the full name
     for (let i = 0; i < shortenedHeader.length; i++) {
-        if (name === shortenedHeader[i][0] || name === shortenedHeader[i][1]) {
-            return i;
+        if (shortenedHeader[i][1] === name) {
+            return shortenedHeader[i][0];
         }
     }
-    ns.tprint("Error 87541: Column not found in shortened header array.");
-    return -1;
+    return name;
 }

@@ -31,7 +31,7 @@ Not used anymore
 1. just run `manager.js`. This should take care of everything unless I forgot about something. 
     - will start periodic_scan.js if it isn't running already to create a log file for all servers and a lot of their stats. 
     - will periodically (currently every 1 hour) run several scripts. 
-    - scans the network and updates the servers_current.txt file that stores the server relevant data
+    - scans the network and updates the servers.txt file that stores the server relevant data
     - determines how to distribute the available ram on purchased servers and home server and hacks hackable target servers in the network
     - also automatically nukes them and opens ports
 1. create programs to open ports whenever available
@@ -51,7 +51,7 @@ rinse and repeat.
 Just some general information on the stuff I have here. I'll rewrite it at some point, but for now I'll just write down what I can before I forget. 
 todo: rewrite all of this
 
-- we periodically scan the whole network and save the data in `data/servers_current.txt`. This is the file that all other scripts read to get info. 
+- we periodically scan the whole network and save the data in `data/servers.txt`. This is the file that all other scripts read to get info. 
 - all tables are saved as 2d arrays as files somewhere as `*.txt` files, because Bitburner only allows us to work with txt and js files. 
 - all tables have `|` as their delimiter and start new lines with `\n`. 
 - all tables have a header row, so we usually start indexing at 1 instead of 0. This way we can simply find the index of the header instead of working with a column number. 
@@ -68,6 +68,6 @@ until I rewrite all of this, here is the general workflow
 
 1. `manager.js` runs in the background executing all other scripts: 
     1. `periodic_scan.js` is run at the beginning with an interval of 1 minute, if it isn't running already
-        1. This will scan the network and overwrite the data to `data/servers_current.txt`. This is the file that other scripts will read to get the current server info. 
-        1. This will also append to `data/servers.txt`. This is the log file that we can use for plotting. 
-    1. `scan.js` is used to update the `data/servers_current.txt` file with new data. Useful after we have done something to the servers, e.g. started hacking on them, to get updated information on the servers. 
+        1. This will scan the network and overwrite the data to `data/servers.txt`. This is the file that other scripts will read to get the current server info. 
+        1. This will also append to `data/servers_log.txt`. This is the log file that we can use for plotting. 
+    1. `scan.js` is used to update the `data/servers.txt` file with new data. Useful after we have done something to the servers, e.g. started hacking on them, to get updated information on the servers. 

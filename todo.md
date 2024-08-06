@@ -18,8 +18,8 @@ here is a short outline of what I want to work on
 | hack.js |  | test |
 | manager.js |  | test |
 | periodic_scan.js |  | test |
-| print_servers.js |  | test |
+| print_servers.js | ✔ |  |
 | purchase_hacknet.js |  | Do once I have API access. |
 | purchase_server.js |  | test |
-| scan.js |  | test |
+| scan.js | ✔ |  |
 |  |  |  |

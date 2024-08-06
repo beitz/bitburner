@@ -4,7 +4,7 @@ import { readData } from 'utils/utils.js';
 
 /**
  * This script is used to quickly connect to a specific server. 
- * It reads the server data from "data/servers_current.txt" and creates a connection string to the specified server.
+ * It reads the server data from "data/servers.txt" and creates a connection string to the specified server.
  * This string is put into the clipboard so it can be pasted into the terminal.
  * 
  * todo: figure out how to directly connect without having to paste the string into the terminal
@@ -23,7 +23,7 @@ export async function main(ns) {
 
     // ------------------ variables ------------------
     const hostname = ns.args[0];
-    const filePath = "data/servers_current.txt";
+    const filePath = "data/servers.txt";
     const serverData = readData(ns, filePath);
 
     // ------------------ check data and files ------------------

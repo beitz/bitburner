@@ -30,7 +30,7 @@ export async function main(ns) {
     const updateInterval = 1000 * 60 * (getArgValue(args, "u") || 20); // get update interval in minutes. Default is 20 minutes
     const spendMoney = getArgValue(args, "m") || true; // do we spend money? Default is true
     const freeRAMonHome = 50 // gb of RAM we want to keep free on home server for other scripts
-    const serversFile = "data/servers_current.txt";
+    const serversFile = "data/servers.txt";
     const hackFile = "hack.js";
     const scanFile = "scan.js";
     const budgetFactorPurchaseServers = 0.9; // we spend at most 90% of our money on servers
@@ -38,7 +38,7 @@ export async function main(ns) {
     // ------------------ check data and files ------------------
     // If we just started (i.e. our hacking level is 1), we remove the servers file to reset the log data
     if (ns.getHackingLevel() === 1) {
-        ns.rm("data/servers.txt");
+        ns.rm("data/servers_log.txt");
     }
 
     // Check if periodic_scan.js is running. If not, start it
@@ -52,7 +52,7 @@ export async function main(ns) {
         let purchaseServersBudget = ns.getServerMoneyAvailable('home') * budgetFactorPurchaseServers; // we spend at most 90% of our money on servers
 
         // ------------------ update cycle ------------------
-        scan(ns, scanFile); // scan all servers with scan.js to update the `servers_current.txt` file
+        scan(ns, scanFile); // scan all servers with scan.js to update the `servers.txt` file
         nukeServers(ns, serversFile); // nuke all servers
         
         // if spend money, purchase and upgrade servers
@@ -62,7 +62,7 @@ export async function main(ns) {
         }
 
         // #####################################################
-        scan(ns, scanFile); // scan all servers with scan.js to update the `servers_current.txt` file
+        scan(ns, scanFile); // scan all servers with scan.js to update the `servers.txt` file
         hackOnPurchasedServers(ns, freeRAMonHome, hackFile, scanFile); // hack on all purchased servers
         hackOnTargetServers(ns); // hack on target servers
 
