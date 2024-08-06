@@ -1,7 +1,3 @@
-keyboard shortcuts
-- Ctrl + Shift + V      preview
-- Ctrl+K V              side by side
-
 Short overview of the factions and the requirements to unlock them
 
 # Location specific factions

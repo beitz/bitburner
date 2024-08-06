@@ -1,3 +1,7 @@
+keyboard shortcuts
+- Ctrl + Shift + V      preview
+- Ctrl+K V              side by side
+
 # Todo
 
 here is a short outline of what I want to work on
@@ -13,9 +17,9 @@ here is a short outline of what I want to work on
 | contracts.js | ✔ |  |
 | hack.js |  | test |
 | manager.js |  | test |
-| periodic_scan.js |  | Refactor maybe? |
-| print_servers.js |  | Refactor maybe? |
+| periodic_scan.js |  | test |
+| print_servers.js |  | test |
 | purchase_hacknet.js |  | Do once I have API access. |
 | purchase_server.js |  | test |
-| scan.js |  | refactor |
+| scan.js |  | test |
 |  |  |  |

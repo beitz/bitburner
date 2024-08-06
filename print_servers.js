@@ -1,11 +1,20 @@
 /** @param {NS} ns **/
 
-// todo: filter rows before building tree structure. also make sure we print the parent if we have children, even if it is filtered out
-// todo: maybe highlight the things we filtered out instead of filtering out everything else. This way we can still see the tree structure. 
+import { readData } from 'utils/utils.js';
 
-let printColumns = [];
-let filterColumns = [];
-let shortenedHeader = [
+/**
+ * This script prints server information in the terminal in a nicely formatted way.
+ * 
+ * Usage: 
+ * run print_servers.js <args>
+ * Arguments: 
+ * - help: prints the usage of this script and shows what columns are available
+ * - <column>: choose which columns to show. For boolean columns, you can add ':true' or ':false' to only show servers with that value.
+ */
+
+// todo: add ability to print purchased servers? 
+
+const shortenedHeader = [
     ['date time', 'time'],
     ['pos.', 'pos.'],
     ['scanned', 'scanned?'],
@@ -30,128 +39,75 @@ let shortenedHeader = [
 ];
 
 export async function main(ns) {
-    const file = "data/servers_current.txt";
+    // ------------------ check arguments ------------------
+    const serversFile = "data/servers_current.txt";
 
-    // if the first argument is 'help' we print the usage of this script
-    if (ns.args[0] === 'help') {
+    if (ns.args.length === 0 || ns.args[0] === 'help') {
         ns.tprint("Usage: run print_servers.js <args>");
-        ns.tprint("Arguments choose which columns to show. The following columns are available:");
-        ns.tprint("date time, pos., scanned, hostname, hasAdminRights, numOpenPortsRequired, maxRam, " + 
-            "ramUsed, purchasedByPlayer, moneyAvailable, moneyMax, hackDifficulty, minDifficulty, " + 
-            "currentHackingLevel, requiredHackingSkill, depth, files, hackable, serverGrowth, " +
-            "Cores, moneyPercent");
-        // todo: add the functionality to do some simple parsing for filtering as well
-        //       e.g. "depth<5" to only show servers with a depth of less than 5
-        //       e.g. "moneyAvailable>1e6" to only show servers with more than 1e6 money available
-        //       e.g. "hasAdminRights:true" to only show servers with admin rights
-        //       etc. 
-        //       should support : > < >= <= == != as operators. : for boolean values, rest for numbers
+        ns.tprint("Arguments:");
+        ns.tprint("help: prints the usage of this script and shows what columns are available");
+        ns.tprint("<column>: choose which columns to show.");
+        ns.tprint("          For boolean columns, you can add ':true' or ':false' to only show servers with that value.");
         return;
-    } else if (ns.args.length > 0) {
-        printColumns = ['hostname']; // we always want to print the hostname
-        for (let i = 0; i < ns.args.length; i++) {
-            printColumns.push(ns.args[i]);
-        }
-    } else {
-        printColumns = ['hostname', 'hasAdminRights', 'numOpenPortsRequired', 'maxRam', 'ramUsed', 'moneyMax', 'requiredHackingSkill', 'hackable']; // default columns
+    } else if (!ns.args.includes('print')) {
+        ns.tprint("Error 44793: No 'print' argument provided.");
+        return;
     }
 
-    // we go throught the filter column. If we find any args with an operator (e.g. > < >= <= == !=) we add them to 
-    //  the filterColumns array and remove the operator and value from the printColumns array
-    for (let i = 0; i < printColumns.length; i++) {
-        if (printColumns[i].includes(':')) {
-            filterColumns.push(printColumns[i]);
-            printColumns[i] = printColumns[i].split(":")[0];
+    // ------------------ variables ------------------
+    let serverData = readData(serversFile); // 2d array with server data
+    let printColumnData = parseColumns(ns.args); // 2d array with |printColumns|filters|type|
+
+    // ------------------ main ------------------
+    addTreeStructure(serverData);
+    filterData(serverData, printColumnData); // remove unused/filtered columns/rows
+    formatServerData(serverData, shortenedHeader); // replace headers with shortened headers and format data
+    let columnLengths = getColumnLengths(serverData); // 1d array with the max length of each column
+
+    printServerData(ns, serverData, printColumnData, columnLengths, shortenedHeader); // print the filtered server data to terminal
+}
+
+// ------------------ functions ------------------
+function parseColumns(args) { // takes 1d array of arguments and returns 2d array with |printColumns|filters|
+    // we take a 1d array with arguments
+    // those arguments can look like this `['hostname', 'hasAdminRights:true', 'numOpenPortsRequired', etc.]`
+    // we split each item in the array by ':' and check if the second part is a boolean value. If it is, we add it to the second column. 
+    // we add the type to the third column, e.g. 'boolean' or 'number'
+
+    let columnData = [];
+
+    for (let row = 0; row < args.length; row++) {
+        let column = args[row].split(':');
+        let columnName = column[0];
+        let columnValue = column[1];
+        let columnType = typeof columnValue;
+
+        if (columnValue === 'true') {
+            columnValue = true;
+        } else if (columnValue === 'false') {
+            columnValue = false;
         }
+
+        columnData.push([columnName, columnValue, columnType]);
     }
 
-    function readData(file) { // function to read the data from a file
-        let serverData = [];
-        const data = ns.read(file);
+    return columnData;
+}
 
-        for (let line of data.split('\n')) {
-            serverData.push(line.split('|').map(parseValue));
-        }
+function addTreeStructure(serverData) { // takes 2d array with server data and adds tree structure to the hostname column
+    let hostname = serverData[row][serverData[0].indexOf('hostname')];
+    let thisRowDepth = serverData[row][serverData[0].indexOf('depth')];
+    let nextRowDepth = serverData[row+1][serverData[0].indexOf('depth')];
 
-        return serverData;
-    }
-
-    function parseValue(value) { // function to parse the value to the correct type
-        // Try to parse as float
-        if (!isNaN(value) && value.trim() !== '') {
-            return parseFloat(value);
-        }
-        // Check for boolean values
-        if (value.toLowerCase() === 'true') {
-            return true;
-        }
-        if (value.toLowerCase() === 'false') {
-            return false;
-        }
-        // Return the original string if no conversion is possible
-        return value;
-    }
-
-    function shortenHeader(header, shortenedHeader) {
-        // header: string with the name of the column in its original version
-        // shortenedHeader: 2d array with long and short names for the columns
-        // function looks if the header is in the shortenedHeader array and returns the short name if it is, else it returns the original name
-        for (let i = 0; i < shortenedHeader.length; i++) {
-            if (header === shortenedHeader[i][0]) {
-                return shortenedHeader[i][1];
-            } else {
-                return header;
-            }
-        }
-    }
-
-    // Get the server data from the file
-    let serverData = readData(file);
-
-    // we change the formatting of some of the data
-    // if the column is 'moneyMax' or 'moneyAvailable', we format the number to a string with 4 significant digits. e.g. 5.123e+6
-    // if the column is 'pos.' we print the position as a string but without the decimal places
-    for (let i = 1; i < serverData.length-1; i++) { // rows (last row should always be empty, that's why we skip it. We also skip the first row, because it's the header row)
-        for (let j = 0; j < serverData[0].length; j++) { // columns
-            if (serverData[0][j] === 'moneyMax' || serverData[0][j] === 'moneyAvailable') {
-                serverData[i][j] = parseFloat(serverData[i][j]).toExponential(1);
-            }
-            if (serverData[i][j] === 'true' || serverData[i][j] === true) {
-                serverData[i][j] = "✔";
-            } else if (serverData[i][j] === 'false' || serverData[i][j] === false) {
-                serverData[i][j] = " "; // alternative "✘"
-            }
-        }
-    }
-
-    // we find the index of the column with the name 'depth' and 'hostname'
-    let depthColumn = serverData[0].indexOf('depth');
-    let hostnameColumn = serverData[0].indexOf('hostname');
-    let nextRowDepth, thisRowDepth;
-
-    // merging the first two columns (pos. and hostname) into one column and replacing pos with the tree like structure
-    for (let i = 1; i < serverData.length-1; i++) { // rows (last row should always be empty, that's why we skip it)
-        thisRowDepth = serverData[i][depthColumn]
-        if (i+1 <= serverData.length) {
-            nextRowDepth = serverData[i+1][depthColumn]
-        } else {
-            break;
-        }
-
-        // So, there are several cases that can occur here:
-        // 1. The depth of the current row is more than the depth of the next row (e.g. last child of a parent). In this case we print '└'
-        // 2. The depth of the current row is less than the depth of the next row (e.g. parent of a child). In this case we print '├'
-        // 3. The depth of the current row is equal to the depth of the next row (e.g. sibling of a sibling). In this case we print '├'
-        // We fill the empty spaces with '│' in the front
-        
-        // For each depth level, we add a '│' to the tree, unless it's the last depth level, in which case we add a ' ' to the tree
+    let verticalLine = '│';
+    let cornerLine = '└';
+    let siblingLine = '├';
+    let horizontalLine = '─';
+    
+    for (let row = 1; row < serverData.length; row++) {
         let tree = '';
-        let verticalLine = '│';
-        let cornerLine = '└';
-        let siblingLine = '├';
-        let horizontalLine = '─';
 
-        for (let j = 0; j < thisRowDepth; j++) {
+        for (let i = 0; i < thisRowDepth; i++) {
             tree += verticalLine + ' ';
         }
 
@@ -161,73 +117,139 @@ export async function main(ns) {
             tree += siblingLine + horizontalLine;
         }
 
-        // we replace the hostname column with the tree like structure and add the name to it
-        serverData[i][hostnameColumn] = tree + serverData[i][hostnameColumn];
-    }
-
-    // We determine the max length of each column
-    let columnLengths = [];
-    for (let i = 1; i < serverData.length-1; i++) { // rows (last row should always be empty, that's why we skip it. We also skip the first row, because it's the header row)
-        for (let j = 0; j < serverData[0].length; j++) { // columns
-            if (columnLengths[j] === undefined) columnLengths[j] = 0; // we initialize the column length if it doesn't exist yet
-            if (serverData[i][j].toString().length > columnLengths[j]) {
-                // if the current value is longer than the current column length, we update the column length
-                columnLengths[j] = serverData[i][j].toString().length; 
-            }
-        }
-    }
-    // now we check the header row as well, but with the data from the shortened header
-    for (let i = 0; i < shortenedHeader.length; i++) {
-        if (shortenedHeader[i][1].length > columnLengths[i]) {
-            columnLengths[i] = shortenedHeader[i][1].length;
-        }
-    }
-
-    ns.tprint("Printing file: " + file + " with the following columns: " + printColumns.join(', '));
-
-    // Print data to terminal
-    for (let i = 0; i < serverData.length-1; i++) { // rows
-        let row = '';
-        for (let j = 0; j < serverData[0].length; j++) { // columns
-            // if the current column is included in the printColumns array, we print it. else we skip it
-            if (printColumns.includes(serverData[0][j])) {
-                if (i === 0) { // for the header row we print the header row, but with the shortened headers
-                    row += shortenedHeader[j][1].toString().padStart(columnLengths[j] + 2, ' ');
-                } else {
-                    if (j === hostnameColumn) { // just for the hostname column (where we have tree + name) we want to align left
-                        row += serverData[i][j].toString().padEnd(columnLengths[j] + 2, '_'); 
-                    } else { // for all other columns we want to align everything to the right
-                        row += serverData[i][j].toString().padStart(columnLengths[j] + 2, ' ');
-                    }
-                }
-            }
-        }
-
-        // some logic to determine if we should print the line or not
-        let print_line = true;
-        // we iterate through the list of all arguments that have one of the following operators: > < >= <= == != :
-        for (let k = 0; k < ns.args.length; k++) {
-            if (ns.args[k].includes(':')) { // for all arguments containing a : we check if the value is a boolean or not
-                let arg = ns.args[k].split(':');
-                let column = arg[0];
-                let argValue = arg[1];
-                let columnIndex = serverData[0].indexOf(column);
-                let serverValue = serverData[i][columnIndex];
-
-                if (argValue === 'true') {
-                    if (serverValue !== 'true' && serverValue !== '✔') print_line = false;
-                } else if (argValue === 'false') {
-                    if (serverValue !== 'false' && serverValue !== ' ') print_line = false;
-                }
-            }
-        }
-        if (print_line || i === 0) ns.tprint(row);
+        serverData[row][serverData[0].indexOf('hostname')] = tree + hostname;
     }
 }
 
-// todo: incorporate this somehow into this script
-    // if (ns.args[0] === 'list') { // list our purchased servers: name, max ram, used ram
-    //     for (let i = 0; i < purchasedServers.length; i++) {
-    //         let server = ns.getServer(purchasedServers[i]);
-    //         ns.tprint(`${server.hostname}: ${server.ramUsed}/${server.maxRam}`);
-    //     }
+function filterData(serverData, printColumnData) { // takes 2d array with server data and removes unused columns
+    // ------------------ remove columns ------------------
+    for (let row = 0; row < serverData.length; row++) { // go through each row ...
+        for (let col = 0; col < serverData[0].length; col++) { // ... and each column of the server Data
+            let serverColumnName = serverData[0][col];
+            // let serverColumnValue = serverData[row][col];
+            // let serverColumnType = typeof columnValue;
+            let removeColumn = true;
+
+            for (let i = 0; i < printColumnData.length; i++) { // we compare each value with each of the filter values
+                let columnName = printColumnData[i][0];
+                // let columnFilter = printColumnData[i][1];
+                // let columnType = printColumnData[i][2];
+
+                if (serverColumnName === columnName) { // if the column name is the same as the filter column name
+                    removeColumn = false; // we found the column, so we keep it
+                    continue; // we found the column, so we keep it
+                }
+            }
+            if (removeColumn) { // remove column
+                serverData[row].splice(col, 1); // remove the column
+            }
+        }
+    }
+
+    // ------------------ filter rows ------------------
+    for (let row = 0; row < serverData.length; row++) { // go through each row ...
+        let removeRow = true;
+
+        for (let col = 0; col < serverData[0].length; col++) { // ... and each column of the server Data
+            let serverColumnName = serverData[0][col];
+            let printColumnRow = printColumnData.find(x => x[0] === serverColumnName);
+            let columnType = printColumnRow[2];
+
+            if (columnType === 'boolean') { // if the column type is boolean
+                // check if the column value is the same as the filter value, if yes keep it, if not remove the row
+                if (parseValue(serverData[row][col]) === parseValue(printColumnRow[1])) {
+                    removeRow = false; // we found a row that we want to keep
+                    continue; // we found a row that we want to keep
+                }
+            }
+            // todo: add the same logic for numbers
+        }
+        if (removeRow) { // remove row
+            serverData.splice(row, 1); // remove the row
+        }
+    }
+}
+
+function parseValue(value) { // takes a value and returns the value as a boolean or number
+    if (value === 'true') {
+        return true;
+    }
+    if (value === 'false') {
+        return false;
+    }
+    if (!isNaN(value)) {
+        return parseFloat(value);
+    }
+    return value;
+}
+
+function formatServerData(serverData, shortenedHeader) { // takes 2d array with server data and replaces headers with shortened headers and formats data
+    for (let row = 0; row < serverData.length; row++) {
+        for (let col = 0; col < serverData[0].length; col++) {
+            // if the column header is found in the shortenedHeader array, we replace the header with the shortened header
+            for (let i = 0; i < shortenedHeader.length; i++) {
+                if (serverData[0][col] === shortenedHeader[i][0]) {
+                    serverData[0][col] = shortenedHeader[i][1];
+                }
+            }
+
+            // if we're in the data rows (not the header row), we format the data
+            if (row > 0) {
+                // if the value has more than 4 significant digits, we format it to a string with 4 significant digits. e.g. 5.123e+6
+                if (typeof serverData[row][col] === 'number' && serverData[row][col].toString().length > 4) {
+                    serverData[row][col] = parseFloat(serverData[row][col]).toExponential(1);
+                } else if (serverData[row][col] === 'true' || serverData[row][col] === true) {
+                    serverData[row][col] = "✔";
+                } else if (serverData[row][col] === 'false' || serverData[row][col] === false) {
+                    serverData[row][col] = " "; // alternative "✘"
+                }
+            }
+        }
+    }
+}
+
+function getColumnLengths(serverData) { // takes 2d array with server data and returns 1d array with the max length of each column
+    let columnLengths = [];
+
+    for (let row = 0; row < serverData.length; row++) {
+        for (let col = 0; col < serverData[0].length; col++) {
+            if (columnLengths[col] === undefined) columnLengths[col] = 0;
+            if (serverData[row][col].toString().length > columnLengths[col]) {
+                columnLengths[col] = serverData[row][col].toString().length;
+            }
+        }
+    }
+
+    return columnLengths;
+}
+
+function printServerData(ns, serverData, columnData, columnLengths, shortenedHeader) { // prints the filtered server data to terminal
+    ns.tprint("Printing server data with the following columns: " + columnData.map(x => x[0]).join(', '));
+
+    let spacing = 2; // spacing between columns
+
+    for (let row = 0; row < serverData.length; row++) {
+        let printedRow = '';
+        for (let col = 0; col < serverData[0].length; col++) {
+            if (row === 0) { // in the header row we align everything to the left
+                printedRow += shortenedHeader[col].toString().padEnd(columnLengths[col] + spacing, ' ');
+            } else {
+                if (col === getIndexOfColumn('hostname', shortenedHeader)) { // for the hostname column we align left
+                    printedRow += serverData[row][col].toString().padEnd(columnLengths[col] + spacing, '_');
+                } else {
+                    printedRow += serverData[row][col].toString().padStart(columnLengths[col] + spacing, ' ');
+                }
+            }
+        }
+    }
+}
+
+function getIndexOfColumn(name, shortenedHeader) { // takes a name and the shortened header array and returns the index of the column
+    for (let i = 0; i < shortenedHeader.length; i++) {
+        if (name === shortenedHeader[i][0] || name === shortenedHeader[i][1]) {
+            return i;
+        }
+    }
+    ns.tprint("Error 87541: Column not found in shortened header array.");
+    return -1;
+}
