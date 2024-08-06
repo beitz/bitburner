@@ -11,9 +11,15 @@
 export async function main(ns) {
     let interval = 60; // scanning interval in seconds. default to 60 seconds
 
+    if (ns.args.length === 0) {
+        ns.tprint('Usage: run periodic_scan.js <interval>');
+        ns.tprint('interval: "m" at the end means minutes, "s" at the end or no suffix means seconds');
+        return;
+    }
+
     if (ns.args.length === 1) {
         let arg = ns.args[0];
-        let lastChar = arg.charAt(arg.length - 1);
+        let lastChar = arg.toString().charAt(arg.length - 1);
         
         // if it's a number with an m at the end, it's supposed to be in minutes
         // if it's a number with an s at the end, or just a number, it's supposed to be in seconds
@@ -22,6 +28,11 @@ export async function main(ns) {
         } else {
             interval = parseInt(arg);
         }
+    } else {
+        ns.tprint('Usage: run periodic_scan.js <interval>');
+        ns.tprint('interval: "m" at the end means minutes, "s" at the end or no suffix means seconds');
+        ns.tprint(' >>> Too many arguments provided <<< ');
+        return;
     }
 
     ns.tprint(`Starting periodic scan with interval of ${interval} seconds`);

@@ -17,9 +17,9 @@ here is a short outline of what I want to work on
 | contracts.js | ✔ |  |
 | hack.js |  | test |
 | manager.js |  | test |
-| periodic_scan.js |  | test |
+| periodic_scan.js | ✔ |  |
 | print_servers.js | ✔ |  |
 | purchase_hacknet.js |  | Do once I have API access. |
-| purchase_server.js |  | test |
+| purchase_server.js | ✔ |  |
 | scan.js | ✔ |  |
 |  |  |  |

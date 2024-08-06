@@ -4,23 +4,27 @@
  * This script is used to purchase and upgrade servers.
  * 
  * Usage: 
- * run purchase_server.js <budget>
+ * run purchase_server.js buy <budget>
  * budget: optional - the amount of money we're willing to spend on purchasing servers. default is all of our money.
  */
 
 export async function main(ns) {
     // ------------------ variables ------------------
     if (ns.args.length === 0) {
-        ns.tprint("Usage: run purchase_server.js <budget>");
+        ns.tprint("Usage: run purchase_server.js buy <budget>");
         ns.tprint("budget: optional - the amount of money we're willing to spend on purchasing servers. default is all of our money.");
         return;
-    } else if (ns.args.length > 1) {
+    } else if (ns.args.length > 2) {
         ns.tprint("Error 2476: Too many arguments");
+        return;
+    }
+    if (ns.args[0] !== 'buy') {
+        ns.tprint("Error 2477: wrong argument");
         return;
     }
 
     let minRam = 128; // smallest server we will allow to be bought
-    let budget = ns.args[0] || ns.getServerMoneyAvailable('home');
+    let budget = ns.args[1] || ns.getServerMoneyAvailable('home');
     const purchasedServerPrefix = 'purchased-server-';
     
     // ------------------ main ------------------

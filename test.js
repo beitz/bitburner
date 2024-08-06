@@ -11,5 +11,8 @@
 // "Encryption I: Caesar Cipher","Encryption II: Vigenère Cipher"]
 
 export async function main(ns) {
-    let contract = ns.codingcontract.createDummyContract("Generate IP Addresses");
+    // let contract = ns.codingcontract.createDummyContract("Generate IP Addresses");
+
+    let purchasedServers = ns.getPurchasedServers();
+    ns.tprint(purchasedServers);
 }

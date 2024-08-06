@@ -41,6 +41,7 @@ export async function main(ns) {
 
     // ------------------ main ------------------
     initializeServerDataFile(ns, serverDataFile, serverDataHeader);
+    initializeServerDataLogFile(ns, serverDataLogFile, serverDataHeader);
 
     scanServers(ns, serverData);
 
@@ -73,6 +74,12 @@ function isHackable(ns, server) { // function to determine if a server is hackab
 function initializeServerDataFile(ns, serverDataFile, serverDataHeader) { // function to initialize the server data file
     if (!ns.fileExists(serverDataFile)) {
         writeData(ns, serverDataFile, serverDataHeader);
+    }
+}
+
+function initializeServerDataLogFile(ns, serverDataLogFile, serverDataHeader) { // function to initialize the server data log file
+    if (!ns.fileExists(serverDataLogFile)) {
+        writeData(ns, serverDataLogFile, serverDataHeader);
     }
 }
 
@@ -121,9 +128,9 @@ function scanServers(ns, serverData) { // function to scan all servers in the ne
 }
 
 function saveServerData(ns, serverDataFile, serverDataLogFile, serverData, serverDataHeader, log) { // function to save the server data to a file
-    serverData.unshift(serverDataHeader[0]); // let's add the server data header first
+    serverData.unshift(serverDataHeader[0]); // let's add the server data header first so we can index it if need be
     
-    for (let row = 1; row < serverData.length; row++) {
+    for (let row = 1; row < serverData.length; row++) { // we skip the first row as it contains the header
         // server data headers atm: [0] date time, [1] position, [2] scanned, [3] hostname
         let server = ns.getServer(serverData[row][3]);
         let hostname = serverData[row][3];
@@ -153,5 +160,10 @@ function saveServerData(ns, serverDataFile, serverDataLogFile, serverData, serve
 
     // now we can store all of that in the servers_log.txt file so other scripts can use it for something
     writeData(ns, serverDataFile, serverData);
-    if (log) writeData(ns, serverDataLogFile, serverData, 'a');
+
+    if (log) {
+        // remove the header row again, as we don't want to save it to the file
+        serverData.shift();
+        writeData(ns, serverDataLogFile, serverData, 'a');
+    }
 }

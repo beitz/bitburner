@@ -12,9 +12,6 @@ import { readData, debugPrint } from 'utils/utils.js';
  * - <column>: choose which columns to show. For boolean columns, you can add ':true' or ':false' to only show servers with that value.
  */
 
-// todo: filtering rows doesn't work anymore. fix that. 
-// todo: add ability to print purchased servers? 
-
 const shortenedHeader = [
     ['date time', 'time'],
     ['pos.', 'pos.'],

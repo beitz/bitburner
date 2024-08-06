@@ -27,9 +27,9 @@ export async function main(ns) {
     }
 
     // ------------------ variables ------------------
-    const updateInterval = 1000 * 60 * (getArgValue(args, "u") || 20); // get update interval in minutes. Default is 20 minutes
-    const spendMoney = getArgValue(args, "m") || true; // do we spend money? Default is true
-    const freeRAMonHome = 50 // gb of RAM we want to keep free on home server for other scripts
+    const updateInterval = 1000 * 60 * (getArgValue(ns.args, "u") || 20); // get update interval in minutes. Default is 20 minutes
+    const spendMoney = getArgValue(ns.args, "m") !== undefined ? getArgValue(ns.args, "m") : true; // do we spend money? Default is true
+    const freeRAMonHome = 50; // gb of RAM we want to keep free on home server for other scripts
     const serversFile = "data/servers.txt";
     const hackFile = "hack.js";
     const scanFile = "scan.js";
@@ -43,7 +43,7 @@ export async function main(ns) {
 
     // Check if periodic_scan.js is running. If not, start it
     if (!ns.scriptRunning('periodic_scan.js', 'home')) {
-        ns.run('periodic_scan.js');
+        ns.run('periodic_scan.js', 1, '60'); // run periodic_scan.js every 60 seconds
     }
 
     // ------------------ main ------------------
@@ -58,13 +58,13 @@ export async function main(ns) {
         // if spend money, purchase and upgrade servers
         if (spendMoney) {
             scan(ns, scanFile);
-            ns.run('purchase_server.js', 1, purchaseServersBudget); // purchase/upgrade servers
+            ns.run('purchase_server.js', 1, 'buy', purchaseServersBudget); // purchase/upgrade servers
         }
 
         // #####################################################
         scan(ns, scanFile); // scan all servers with scan.js to update the `servers.txt` file
         hackOnPurchasedServers(ns, freeRAMonHome, hackFile, scanFile); // hack on all purchased servers
-        hackOnTargetServers(ns); // hack on target servers
+        hackOnTargetServers(ns, serversFile); // hack on target servers
 
         await ns.sleep(updateInterval); // wait until the next update cycle
     }
@@ -82,15 +82,15 @@ function getArgValue(args, key) { // get the value of the argument key
 }
 
 function scan(ns, scanFile) { // scan all servers
-    ns.run(scanFile);
+    ns.run(scanFile, 1, 'scan');
 }
 
-async function nukeServers(ns, serversFile) { // nuke all servers
+function nukeServers(ns, serversFile) { // nuke all servers
     const serverData = readData(ns, serversFile);
     const indexHostname = serverData[0].indexOf('hostname');
     const indexAdmin = serverData[0].indexOf('hasAdminRights');
 
-    for (let row = 1; row < serverData.length; row++) {
+    for (let row = 1; row < serverData.length - 1; row++) {
         if (!serverData[row][indexAdmin] && serverHackable(serverData[row])) { // if the server is hackable and we don't have admin rights yet
             ns.nuke(serverData[row][indexHostname]); // we nuke it
         }
@@ -121,7 +121,9 @@ function hackOnTargetServers(ns, serversFile) { // hack on target servers
             
             // calculate the amount of threads we can use and run the hack script
             let threads = Math.floor((server.maxRam - server.ramUsed) / scriptRam); 
-            ns.exec('hack.js', serverData[row][indexHostname], threads, serverData[row][indexHostname], threads);
+            if (threads > 0) {
+                ns.exec('hack.js', serverData[row][indexHostname], threads, serverData[row][indexHostname], threads);
+            }
         }
     }
 }
@@ -194,6 +196,12 @@ function hackOnPurchasedServers(ns, freeRAMonHome, hackFile, scanFile) { // hack
 
     let counter = 1; // counter to prevent infinite loops, just in case we mess up something
     while (remainingThreads > 0) {
+        if (iP >= purchasedServers.length || iH >= toHackServers.length) {
+            // ns.tprint("Error 2052: Index exceeded array length. Breaking loop. Remaning threads: " + remainingThreads);
+            // todo: figure out how to prevent this error, cause it happens all the time
+            break;
+        }
+
         // if the current purchased server has enough threads available, we run the hack script on it with the given amount of threads
         if (purchasedServers[iP][indexThreads] > toHackServers[iH][indexThreads]) {
             if (toHackServers[iH][indexThreads] > 0) { // only if threads are > 0 we run the hack script
@@ -222,7 +230,7 @@ function serverHackable(target, serverData) { // check if the target server is h
     const index_hostname = serverData[0].indexOf('hostname');
     const index_admin = serverData[0].indexOf('hasAdminRights');
 
-    for (let i = 1; i < serverData.length; i++) {
+    for (let i = 1; i < serverData.length - 1; i++) {
         if (serverData[i][index_hostname] === target) {
             if (serverData[i][index_admin]) {
                 return true;
