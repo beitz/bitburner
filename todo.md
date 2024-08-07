@@ -16,7 +16,7 @@ here is a short outline of what I want to work on
 | connect.js | ✔ |  |
 | contracts.js | ✔ |  |
 | hack.js |  | test |
-| manager.js |  | test |
+| manager.js |  | **fix nuking and hacking!!!** |
 | periodic_scan.js | ✔ |  |
 | print_servers.js | ✔ |  |
 | purchase_hacknet.js |  | Do once I have API access. |

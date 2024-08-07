@@ -91,7 +91,7 @@ function nukeServers(ns, serversFile) { // nuke all servers
     const indexAdmin = serverData[0].indexOf('hasAdminRights');
 
     for (let row = 1; row < serverData.length - 1; row++) {
-        if (!serverData[row][indexAdmin] && serverHackable(serverData[row])) { // if the server is hackable and we don't have admin rights yet
+        if (!serverData[row][indexAdmin] && serverHackable(serverData[row][indexHostname], serverData)) { // if the server is hackable and we don't have admin rights yet
             ns.nuke(serverData[row][indexHostname]); // we nuke it
         }
     }
