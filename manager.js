@@ -252,6 +252,9 @@ function hackOnPurchasedServers(ns, freeRAMonHome, hackFile, serversFile, hackOn
     // todo: debug this while loop, then we should be done!
     let counter = 1; // counter to prevent infinite loops, just in case we mess up something
     while (remainingThreads > 0) {
+        ns.tprint("Remaining threads: " + remainingThreads);
+        ns.tprint("purchsedServers.length: " + purchasedServers.length + ", iP: " + iP);
+        ns.tprint("toHackServers.length: " + toHackServers.length + ", iH: " + iH);
         if (iP >= purchasedServers.length || iH >= toHackServers.length) {
             // ns.tprint("Error 2052: Index exceeded array length. Breaking loop. Remaning threads: " + remainingThreads);
             // todo: figure out how to prevent this error, cause it happens all the time
