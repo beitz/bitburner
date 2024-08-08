@@ -50,6 +50,7 @@ function purchaseServers(ns, budget, minRam, purchasedServerPrefix) { // functio
             let cost = ns.getPurchasedServerCost(purchaseRam);
             if (cost <= budget) {
                 ns.purchaseServer(purchasedServerPrefix + purchasedServers.length, purchaseRam);
+                purchasedServers = ns.getPurchasedServers(); // update the list of purchased servers
                 budget -= cost;
                 break;
             }

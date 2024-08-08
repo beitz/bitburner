@@ -13,6 +13,33 @@
 export async function main(ns) {
     // let contract = ns.codingcontract.createDummyContract("Generate IP Addresses");
 
-    let purchasedServers = ns.getPurchasedServers();
-    ns.tprint(purchasedServers);
+    // let purchasedServers = ns.getPurchasedServers();
+    // ns.tprint(purchasedServers);
+
+    // let processes = ns.ps('home');
+    // for (let i = processes.length - 1; i >= 0; i--) {
+    //     ns.tprint(processes[i]);
+    //     ns.tprint(processes[i].pid);
+    // }
+
+
+
+    let processes = ns.ps('home');
+    let currentManagerPID;
+
+    // we looop through the processes on our home server from last to first. 
+    // the first process with "manager" in the filename is the current script, we leave that alone. 
+    // all other manager scripts will be killed
+    ns.tprint(processes);
+    for (let i = processes.length - 1; i >= 0; i--) {
+        if (processes[i].filename.includes('manager') && !currentManagerPID) {
+            currentManagerPID = processes[i].pid;
+            ns.tprint(`not killing process ${processes[i].pid}`);
+            continue;
+        }
+        if (processes[i].filename.includes('manager')) {
+            // ns.kill(processes.pid);
+            ns.tprint(`killing process ${processes[i].pid}`);
+        }
+    }
 }

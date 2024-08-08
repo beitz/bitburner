@@ -11,11 +11,12 @@ here is a short outline of what I want to work on
 | contracts/contract_scripts.txt | ✔ |  |
 | contracts/Generate_IP_Addresses.js | ✔ |  |
 | contracts/Minimum_Path_Sum_in_a_Triangle.js | ✔ |  |
+| contracts/ < all other contracts > |  | todo |
 | utils/contractUtils.js | ✔ |  |
 | utils/utils.js | ✔ |  |
 | connect.js | ✔ |  |
 | contracts.js | ✔ |  |
-| hack.js |  | test |
+| hack.js | ✔ |  |
 | manager.js |  | **fix nuking and hacking!!!** |
 | periodic_scan.js | ✔ |  |
 | print_servers.js | ✔ |  |

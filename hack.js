@@ -9,6 +9,8 @@
  * threads: optional - number of threads we're using. Default is 1.
  */
 
+// todo: figure out a more efficient way to hack money instead of simply setting the theshold to 90% max money. 
+
 export async function main(ns) {
     // ------------------ check arguments ------------------
     if (ns.args.length < 1) {

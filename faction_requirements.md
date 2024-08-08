@@ -125,3 +125,19 @@ Short overview of the factions and the requirements to unlock them
 | Combat Rib I | 2.375e7 | 7.5e3 | +10% str, +10% def |
 | LumiCloaking V2 | 3e7 | 5e3 | +10% def, +10% agi, +25% crime money |
 | * SmartSonarImplant | 7.5e7 | 2.25e4 | +10% dex, +10% dex xp, +25% crime money |
+
+### The Syndicate
+- Located in Aevum or Sector-12
+- Not working for the Central Intelligence Agency
+- Not working for the National Security Agency
+- Have $1e7
+- Hacking level 200
+- Strength level 200
+- Defense level 200
+- Dexterity level 200
+- Agility level 200
+- A criminal reputation
+
+| Augmentation | Money | Reputation | Effect |
+| :----: | :---: | :-------: | :-----: |
+| Lots of augmentations |  |  | todo |
