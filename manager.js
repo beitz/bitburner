@@ -16,6 +16,9 @@ import { readData, debugPrint } from 'utils/utils.js';
  * - 'm:false' to not spend money
  */
 
+// todo: add something like "u:a" for update, automatic to increase update intervall automatically over time from like 5 to 60 minutes over the course of let's say a few hours. 
+// todo: also figure out why we need to run this script twice for it to work and start hacking on the servers. maybe add "await" to scan? only doesn't work sometimes though?! sometimes it works on the first run. wtf... 
+
 export async function main(ns) {
     // ------------------ check arguments ------------------
     if (ns.args.length === 0) { // if no arguments are passed, print help
@@ -27,7 +30,15 @@ export async function main(ns) {
     }
 
     // ------------------ variables ------------------
-    const updateInterval = 1000 * 60 * (getArgValue(ns.args, "u") || 20); // get update interval in minutes. Default is 20 minutes
+    // if we specify "u:a" as the argument, we provide an array [5, 5, 5, 5, 10, 10, 10, 15, 20, 30, 40, 50, 60] instead as the value for updateInterval
+    let updateInterval, updateIntervalArray;
+    let autoInterval = false;
+    if (getArgValue(ns.args, "u") === 'a') {
+        updateIntervalArray = [5, 5, 5, 5, 10, 10, 10, 15, 20, 30, 40, 50, 60]; // if we set the update interval to auto "a", we slowly increase the update interval over time
+        autoInterval = true;
+    } else {
+        updateInterval = getArgValue(ns.args, "u") !== null ? getArgValue(ns.args, "u") * 60 * 1000 : 5 * 60 * 1000; // update interval in minutes
+    }
     const spendMoney = getArgValue(ns.args, "m") !== null ? getArgValue(ns.args, "m") : true; // do we spend money? Default is true
     const freeRAMonHome = 50; // gb of RAM we want to keep free on home server for other scripts
     const serversFile = "data/servers.txt";
@@ -73,6 +84,11 @@ export async function main(ns) {
 
         scan(ns, scanFile);
 
+        if (autoInterval) {
+            if (updateIntervalArray.length > 0) { // we iterate through the array, until we're at the last element. 
+                updateInterval = updateIntervalArray.shift();
+            }
+        }
         await ns.sleep(updateInterval); // wait until the next update cycle
     }
 }
@@ -156,7 +172,6 @@ function hackOnTargetServers(ns, serversFile) { // hack on target servers
 
     for (let row = 1; row < serverData.length; row++) {
         if (serverData[row][indexAdmin] && !serverData[row][indexPurchasedByPlayer]) { // if we have admin rights and but the server is not purchased by us
-            let server = ns.getServer(serverData[row][indexHostname]);
             let ps = ns.ps(serverData[row][indexHostname]);
 
             for (let p of ps) { // kill all running scripts on the server
@@ -168,13 +183,6 @@ function hackOnTargetServers(ns, serversFile) { // hack on target servers
             // remove, then copy the hack script
             ns.rm('hack.js', serverData[row][indexHostname]);
             ns.scp('hack.js', serverData[row][indexHostname]);
-
-            // // calculate the amount of threads we can use and run the hack script
-            // let threads = Math.floor((server.maxRam - server.ramUsed) / scriptRam); 
-            // if (threads > 0) {
-            //     ns.tprint(`executing hack.js on ${serverData[row][indexHostname]} with ${threads} threads`);
-            //     ns.exec('hack.js', serverData[row][indexHostname], threads, serverData[row][indexHostname], threads);
-            // }
         }
     }
 
