@@ -58,7 +58,7 @@ export async function main(ns) {
         // ------------------ update cycle ------------------
         scan(ns, scanFile); // scan all servers with scan.js to update the `servers.txt` file
         nukeServers(ns, serversFile); // nuke all servers
-        // todo: solve contracts where possible. 
+        tryContracts(ns, serversFile); // try to complete contracts
         
         // if spendMoney = true, purchase and upgrade servers
         if (spendMoney) {
@@ -130,6 +130,21 @@ function openPorts(ns, target) { // open all ports on the target server
     if (ns.fileExists('relaySMTP.exe', 'home')) ns.relaysmtp(target);
     if (ns.fileExists('HTTPWorm.exe', 'home')) ns.httpworm(target);
     if (ns.fileExists('SQLInject.exe', 'home')) ns.sqlinject(target);    
+}
+
+function tryContracts(ns, serversFile) { // try to complete contracts
+    let serverData = readData(ns, serversFile);
+    let indexHostname = serverData[0].indexOf('hostname');
+    let indexFiles = serverData[0].indexOf('files');
+
+    for (let row = 1; row < serverData.length - 1; row++) {
+        let files = serverData[row][indexFiles].split(',');
+        for (let file of files) {
+            if (file.includes('contract-')) { // if the filename includes "contract" we try to solve it
+                ns.run('contracts.js', 1, 'solve', file, serverData[row][indexHostname]);
+            }
+        }
+    }
 }
 
 function hackOnTargetServers(ns, serversFile) { // hack on target servers
