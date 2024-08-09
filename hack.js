@@ -47,6 +47,7 @@ function updateServerInfo(ns, target) { // returns the [current money available,
 async function hackServer(ns, target, moneyThreshold, securityThreshold, threads) { // function to hack the target server
     const [moneyAvailable, maxMoney, securityLevel, minSecurityLevel] = updateServerInfo(ns, target);
     // added a check for securityLevel > minSecurityLevel + 20 to prevent security skyrocketing if hacking with a lot of threads. 
+    ns.print(`securityLevel: ${securityLevel}, minSecurityLevel: ${minSecurityLevel}, threads: ${threads}`);
     if (securityLevel > minSecurityLevel + (securityThreshold * threads) || securityLevel > minSecurityLevel + 10) {
         await ns.weaken(target);
     } else if (moneyAvailable < maxMoney * moneyThreshold) {

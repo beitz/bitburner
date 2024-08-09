@@ -74,11 +74,11 @@ export function debugPrint(ns, data, text = '') { // debug print to terminal
         return;
     }
     if (data.length > 0 && Array.isArray(data[0])) {
-        for (let i = 0; i < data.length - 1; i++) {
+        for (let i = 0; i < data.length; i++) {
             ns.tprint(data[i]);
         }
     } else if (Array.isArray(data)) {
-        for (let i = 0; i < data.length - 1; i++) {
+        for (let i = 0; i < data.length; i++) {
             ns.tprint(data[i]);
         }
     } else {
