@@ -18,9 +18,9 @@ import { readData } from 'utils/utils.js';
 
 // todo: also figure out why we need to run this script twice for it to work and start hacking on the servers. maybe add "await" to scan? only doesn't work sometimes though?! sometimes it works on the first run. wtf... 
 
-ns.disableLog("ALL"); // disable all logging. we'll log ourselves what's important
-
 export async function main(ns) {
+    ns.disableLog("ALL"); // disable all logging. we'll log ourselves what's important
+
     // ------------------ check arguments ------------------
     if (ns.args.length === 0) { // if no arguments are passed, print help
         ns.tprint("Usage: run manager.js <args>");
@@ -93,7 +93,7 @@ export async function main(ns) {
                 updateInterval = updateIntervalArray.shift() * 1000 * 60;
             }
         }
-        ns.print(`sleeping for ${updateInterval} minutes...`);
+        ns.print(`sleeping for ${updateInterval / 1000 / 60} minutes...`);
         await ns.sleep(updateInterval); // wait until the next update cycle
     }
 }
