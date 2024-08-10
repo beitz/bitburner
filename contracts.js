@@ -40,7 +40,7 @@ export async function main(ns) {
     let contractData; // 2d array containing the contract type, script file and status
 
     if (!ns.fileExists(contractScriptsFile)) { // if the contractScriptsFile doesn't exist, initialize it
-        initializeContractScripts(ns, contractScriptsFile);
+        await initializeContractScripts(ns, contractScriptsFile);
     }
     contractData = readData(ns, contractScriptsFile);
 
@@ -55,13 +55,13 @@ export async function main(ns) {
 }
 
 // ------------------ functions ------------------
-function initializeContractScripts(ns, contractScriptsFile) { // initialize the contractScriptsFile with the contract types
+async function initializeContractScripts(ns, contractScriptsFile) { // initialize the contractScriptsFile with the contract types
     let contractData = [["contract type", "script file", "status"]]; // header of the 2d array
     let contracts = ns.codingcontract.getContractTypes(); // list of all contract types
     for (let i = 0; i < contracts.length; i++) {
         contractData.push([contracts[i], `contracts/${contracts[i].replace(/ /g, '_')}.js`, "todo"]);
     }
-    writeData(ns, contractScriptsFile, contractData);
+    await writeData(ns, contractScriptsFile, contractData);
 
     // todo: when we initialize, maybe also create the script files if they don't exist
     //       if they exist, then run them and if we can solve, say 100 out of 100 contracts, then mark them as done

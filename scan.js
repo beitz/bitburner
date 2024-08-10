@@ -40,12 +40,12 @@ export async function main(ns) {
         'minDifficulty', 'currentHackingLevel', 'requiredHackingSkill', 'depth', 'files', 'hackable', 'serverGrowth', 'Cores', 'moneyPercent', 'serverValue']];
 
     // ------------------ main ------------------
-    initializeServerDataFile(ns, serverDataFile, serverDataHeader);
-    initializeServerDataLogFile(ns, serverDataLogFile, serverDataHeader);
+    await initializeServerDataFile(ns, serverDataFile, serverDataHeader);
+    await initializeServerDataLogFile(ns, serverDataLogFile, serverDataHeader);
 
     scanServers(ns, serverData);
 
-    saveServerData(ns, serverDataFile, serverDataLogFile, serverData, serverDataHeader, log);
+    await saveServerData(ns, serverDataFile, serverDataLogFile, serverData, serverDataHeader, log);
 }
 
 // ------------------ functions ------------------
@@ -71,15 +71,15 @@ function isHackable(ns, server) { // function to determine if a server is hackab
     }
 }
 
-function initializeServerDataFile(ns, serverDataFile, serverDataHeader) { // function to initialize the server data file
+async function initializeServerDataFile(ns, serverDataFile, serverDataHeader) { // function to initialize the server data file
     if (!ns.fileExists(serverDataFile)) {
-        writeData(ns, serverDataFile, serverDataHeader);
+        await writeData(ns, serverDataFile, serverDataHeader);
     }
 }
 
-function initializeServerDataLogFile(ns, serverDataLogFile, serverDataHeader) { // function to initialize the server data log file
+async function initializeServerDataLogFile(ns, serverDataLogFile, serverDataHeader) { // function to initialize the server data log file
     if (!ns.fileExists(serverDataLogFile)) {
-        writeData(ns, serverDataLogFile, serverDataHeader);
+        await writeData(ns, serverDataLogFile, serverDataHeader);
     }
 }
 
@@ -127,7 +127,7 @@ function scanServers(ns, serverData) { // function to scan all servers in the ne
     }
 }
 
-function saveServerData(ns, serverDataFile, serverDataLogFile, serverData, serverDataHeader, log) { // function to save the server data to a file
+async function saveServerData(ns, serverDataFile, serverDataLogFile, serverData, serverDataHeader, log) { // function to save the server data to a file
     serverData.unshift(serverDataHeader[0]); // let's add the server data header first so we can index it if need be
     
     for (let row = 1; row < serverData.length; row++) { // we skip the first row as it contains the header
@@ -160,11 +160,11 @@ function saveServerData(ns, serverDataFile, serverDataLogFile, serverData, serve
     }
 
     // now we can store all of that in the servers_log.txt file so other scripts can use it for something
-    writeData(ns, serverDataFile, serverData);
+    await writeData(ns, serverDataFile, serverData);
 
     if (log) {
         // remove the header row again, as we don't want to save it to the file
         serverData.shift();
-        writeData(ns, serverDataLogFile, serverData, 'a');
+        await writeData(ns, serverDataLogFile, serverData, 'a');
     }
 }

@@ -68,7 +68,7 @@ export async function main(ns) {
         let purchaseServersBudget = ns.getServerMoneyAvailable('home') * budgetFactorPurchaseServers; // we spend at most 90% of our money on servers
 
         // ------------------ update cycle ------------------
-        ns.print(`scanning, nukung and trying contracts...`);
+        ns.print(`scanning, nuking and trying contracts...`);
         scan(ns, scanFile); // scan all servers with scan.js to update the `servers.txt` file
         nukeServers(ns, serversFile); // nuke all servers
         tryContracts(ns, serversFile); // try to complete contracts
@@ -93,7 +93,7 @@ export async function main(ns) {
                 updateInterval = updateIntervalArray.shift() * 1000 * 60;
             }
         }
-        ns.print(`sleeping for ${updateInterval / 1000 / 60} minutes...`);
+        ns.print(`   zzZZZ   sleeping for ${updateInterval / 1000 / 60} minutes...`);
         await ns.sleep(updateInterval); // wait until the next update cycle
     }
 }
