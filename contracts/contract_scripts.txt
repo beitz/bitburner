@@ -4,8 +4,8 @@ Subarray with Maximum Sum|contracts/Subarray_with_Maximum_Sum.js|todo
 Total Ways to Sum|contracts/Total_Ways_to_Sum.js|todo
 Total Ways to Sum II|contracts/Total_Ways_to_Sum_II.js|todo
 Spiralize Matrix|contracts/Spiralize_Matrix.js|todo
-Array Jumping Game|contracts/Array_Jumping_Game.js|todo
-Array Jumping Game II|contracts/Array_Jumping_Game_II.js|todo
+Array Jumping Game|contracts/Array_Jumping_Game.js|done
+Array Jumping Game II|contracts/Array_Jumping_Game_II.js|done
 Merge Overlapping Intervals|contracts/Merge_Overlapping_Intervals.js|todo
 Generate IP Addresses|contracts/Generate_IP_Addresses.js|done
 Algorithmic Stock Trader I|contracts/Algorithmic_Stock_Trader_I.js|todo
