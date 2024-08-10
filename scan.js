@@ -153,7 +153,8 @@ function saveServerData(ns, serverDataFile, serverDataLogFile, serverData, serve
         newServerData[18] = server.serverGrowth; // server growth
         newServerData[19] = server.cpuCores; // number of CPU cores
         newServerData[20] = server.moneyAvailable / server.moneyMax; // percentage of money available on the server
-        newServerData[21] = server.moneyMax / server.minDifficulty * server.cpuCores * server.serverGrowth / 1000000000; // value of the server calculated by arbitrary formula that I just came up with
+        // newServerData[21] = server.moneyMax / server.minDifficulty * server.cpuCores * server.serverGrowth / 1000000000; // value of the server calculated by arbitrary formula that I just came up with
+        newServerData[21] = 1; // just for testing, set every server value to 1 for now so all are hacked equally
 
         serverData[row] = newServerData;
     }

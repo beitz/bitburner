@@ -1,6 +1,6 @@
 /** @param {NS} ns **/
 
-import { readData, debugPrint } from 'utils/utils.js';
+import { readData } from 'utils/utils.js';
 
 /**
  * This script will always run in the background, periodically executing other scripts.
@@ -16,7 +16,6 @@ import { readData, debugPrint } from 'utils/utils.js';
  * - 'm:false' to not spend money
  */
 
-// todo: add something like "u:a" for update, automatic to increase update intervall automatically over time from like 5 to 60 minutes over the course of let's say a few hours. 
 // todo: also figure out why we need to run this script twice for it to work and start hacking on the servers. maybe add "await" to scan? only doesn't work sometimes though?! sometimes it works on the first run. wtf... 
 
 export async function main(ns) {
