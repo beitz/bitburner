@@ -31,7 +31,7 @@ function parseValue(value) { // function to parse the value to the correct type
     return value;
 }
 
-export function writeData(ns, file, data, mode = "w") { // function to write 2d array to a file
+export async function writeData(ns, file, data, mode = "w") { // function to write 2d array to a file
     let formattedData = ''; // data we will write to the file
 
     // check if is 2d array
@@ -52,7 +52,7 @@ export function writeData(ns, file, data, mode = "w") { // function to write 2d 
         return;
     }
 
-    ns.write(file, formattedData, mode);
+    await ns.write(file, formattedData, mode);
 }
 
 export function getDateTime() { // Function that returns the current date and time as a string

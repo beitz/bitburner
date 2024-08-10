@@ -1,7 +1,7 @@
 /** @param {NS} ns **/
 
 import { getDateTime, writeData } from 'utils/utils.js';
-// export function writeData(ns, file, data, mode = "w") { // function to write 2d array to a file
+
 /**
  * This is a collection of commonly used functions to work with coding contracts.
  */
@@ -28,8 +28,8 @@ export function getContractData(ns, contractFile, host) { // Get contract data f
     return [contractFile, host, inputData];
 }
 
-export function handleContractResult(ns, reward, contractFile, host, isTestMode, contractType) { // Handle the result of a contract
-    writeData(ns, 'data/solved_contracts.txt', [[getDateTime(), contractType, reward]], 'a');
+export async function handleContractResult(ns, reward, contractFile, host, isTestMode, contractType) { // Handle the result of a contract
+    await writeData(ns, 'data/solved_contracts.txt', [[getDateTime(), contractType, reward]], 'a');
     if (!reward) {
         ns.tprint("Error 754196: Contract failed");
     }
