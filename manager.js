@@ -18,6 +18,8 @@ import { readData } from 'utils/utils.js';
 
 // todo: also figure out why we need to run this script twice for it to work and start hacking on the servers. maybe add "await" to scan? only doesn't work sometimes though?! sometimes it works on the first run. wtf... 
 
+ns.disableLog("ALL"); // disable all logging. we'll log ourselves what's important
+
 export async function main(ns) {
     // ------------------ check arguments ------------------
     if (ns.args.length === 0) { // if no arguments are passed, print help
@@ -66,6 +68,7 @@ export async function main(ns) {
         let purchaseServersBudget = ns.getServerMoneyAvailable('home') * budgetFactorPurchaseServers; // we spend at most 90% of our money on servers
 
         // ------------------ update cycle ------------------
+        ns.print(`scanning, nukung and trying contracts...`);
         scan(ns, scanFile); // scan all servers with scan.js to update the `servers.txt` file
         nukeServers(ns, serversFile); // nuke all servers
         tryContracts(ns, serversFile); // try to complete contracts
@@ -73,10 +76,12 @@ export async function main(ns) {
         // if spendMoney = true, purchase and upgrade servers
         if (spendMoney) {
             scan(ns, scanFile);
+            ns.print(`purchasing servers...`);
             ns.run('purchase_server.js', 1, 'buy', purchaseServersBudget); // purchase/upgrade servers
         }
 
         // #####################################################
+        ns.print(`hacking on target servers and purchased servers...`);
         scan(ns, scanFile);
         hackOnTargetServers(ns, serversFile); // hack on target servers
         hackOnPurchasedServers(ns, freeRAMonHome, hackFile, serversFile, hackOnHome); // hack on all purchased servers
@@ -85,9 +90,10 @@ export async function main(ns) {
 
         if (autoInterval) {
             if (updateIntervalArray.length > 0) { // we iterate through the array, until we're at the last element. 
-                updateInterval = updateIntervalArray.shift();
+                updateInterval = updateIntervalArray.shift() * 1000 * 60;
             }
         }
+        ns.print(`sleeping for ${updateInterval} minutes...`);
         await ns.sleep(updateInterval); // wait until the next update cycle
     }
 }
