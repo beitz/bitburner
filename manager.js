@@ -16,8 +16,6 @@ import { readData } from 'utils/utils.js';
  * - 'm:false' to not spend money
  */
 
-// todo: also figure out why we need to run this script twice for it to work and start hacking on the servers. maybe add "await" to scan? only doesn't work sometimes though?! sometimes it works on the first run. wtf... 
-
 export async function main(ns) {
     ns.disableLog("ALL"); // disable all logging. we'll log ourselves what's important
 
@@ -47,6 +45,7 @@ export async function main(ns) {
     const scanFile = "scan.js";
     const budgetFactorPurchaseServers = 0.9; // we spend at most 90% of our money on servers
     const hackOnHome = false; // do we hack on the home server?
+    const sleepBetweenActions = 100; // sleep between actions in milliseconds. Needed to make sure the actions are finished before we continue
 
     // ------------------ kill previous manager.js ------------------
     killPreviousManagers(ns);
@@ -70,12 +69,16 @@ export async function main(ns) {
         // ------------------ update cycle ------------------
         ns.print(`scanning, nukung and trying contracts...`);
         scan(ns, scanFile); // scan all servers with scan.js to update the `servers.txt` file
+        await ns.sleep(sleepBetweenActions); // wait a bit to make sure the scan is finished
         nukeServers(ns, serversFile); // nuke all servers
+        await ns.sleep(sleepBetweenActions);
         tryContracts(ns, serversFile); // try to complete contracts
+        await ns.sleep(sleepBetweenActions);
         
         // if spendMoney = true, purchase and upgrade servers
         if (spendMoney) {
             scan(ns, scanFile);
+            await ns.sleep(sleepBetweenActions);
             ns.print(`purchasing servers...`);
             ns.run('purchase_server.js', 1, 'buy', purchaseServersBudget); // purchase/upgrade servers
         }
@@ -83,7 +86,9 @@ export async function main(ns) {
         // #####################################################
         ns.print(`hacking on target servers and purchased servers...`);
         scan(ns, scanFile);
+        await ns.sleep(sleepBetweenActions);
         hackOnTargetServers(ns, serversFile); // hack on target servers
+        await ns.sleep(sleepBetweenActions);
         hackOnPurchasedServers(ns, freeRAMonHome, hackFile, serversFile, hackOnHome); // hack on all purchased servers
 
         scan(ns, scanFile);

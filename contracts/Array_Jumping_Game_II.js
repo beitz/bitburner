@@ -50,7 +50,7 @@ export async function main(ns) {
     }
 
     const reward = ns.codingcontract.attempt(solution, contractFile, host);
-    handleContractResult(ns, reward, contractFile, host, isTestMode, "Array Jumping Game II");
+    await handleContractResult(ns, reward, contractFile, host, isTestMode, "Array Jumping Game II");
 }
 
 // ------------------ functions ------------------
