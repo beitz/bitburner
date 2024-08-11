@@ -2,15 +2,6 @@
 
 import { createTestContract, getContractData, handleContractResult } from 'utils/contractUtils.js';
 
-// Find Largest Prime Factor
-// You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the contract will self-destruct.
-
-
-// A prime factor is a factor that is a prime number. What is the largest prime factor of 632032381?
-
-
-// If your solution is an empty string, you must leave the text box empty. Do not use "", '', or ``.
-
 /**
  * This script solves the "Find Largest Prime Factor" coding contract.
  * 
@@ -35,7 +26,12 @@ export async function main(ns) {
         return;
     }
     
-    // const solution = do stuff (inputData);
+    // let's time this function 
+    // let start = new Date().getTime();
+    const solution = findLargestPrimeFactor(ns, inputData);
+    // let end = new Date().getTime();
+    // ns.tprint(`Time taken: ${end - start} ms`);
+    // result: All contracts can be solved inbetween 0-1 ms. Good enough for me. 
 
     if (isTestMode) {
         ns.tprint(`Attempting to solve contract: ${contractFile} on host: ${host} with input: ${inputData} and solution: ${solution}`)
@@ -46,3 +42,45 @@ export async function main(ns) {
 }
 
 // ------------------ functions ------------------
+function findLargestPrimeFactor(ns, inputData) {
+    let number = parseInt(inputData);
+    let maxNumber = Math.ceil(Math.sqrt(number));
+    let largestPrimeFactor = 1;
+
+    let counter = 0;
+
+    // @ignore-infinite
+    while (true) {
+        counter++;
+        if (counter > 30) {
+            ns.tprint("Counter exceeded 30. Exiting loop.");
+            break;
+        }
+
+        // ns.tprint(`number: ${number}, largestPrimeFactor: ${largestPrimeFactor}, maxNumber: ${maxNumber}`);
+        for (let i = 2; i <= maxNumber; i++) {
+            if (number % i === 0) {
+                if (i > largestPrimeFactor || i === number) {
+                    largestPrimeFactor = i;
+                }
+                number = number / i;
+                break;
+            }
+            if (i === maxNumber) {
+                if (number > largestPrimeFactor) {
+                    largestPrimeFactor = number;
+                    break;
+                }
+            }
+        }
+
+        if (number === largestPrimeFactor || largestPrimeFactor > number) {
+            if (number > largestPrimeFactor) {
+                largestPrimeFactor = number;
+            }
+            break;
+        }
+    }
+
+    return largestPrimeFactor;
+}
