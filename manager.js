@@ -72,7 +72,7 @@ export async function main(ns) {
         await ns.sleep(sleepBetweenActions); // wait a bit to make sure the scan is finished
         nukeServers(ns, serversFile); // nuke all servers
         await ns.sleep(sleepBetweenActions);
-        tryContracts(ns, serversFile); // try to complete contracts
+        await tryContracts(ns, serversFile); // try to complete contracts
         await ns.sleep(sleepBetweenActions);
         
         // if spendMoney = true, purchase and upgrade servers
@@ -158,7 +158,7 @@ function openPorts(ns, target) { // open all ports on the target server
     if (ns.fileExists('SQLInject.exe', 'home')) ns.sqlinject(target);    
 }
 
-function tryContracts(ns, serversFile) { // try to complete contracts
+async function tryContracts(ns, serversFile) { // try to complete contracts
     let serverData = readData(ns, serversFile);
     let indexHostname = serverData[0].indexOf('hostname');
     let indexFiles = serverData[0].indexOf('files');
@@ -169,6 +169,7 @@ function tryContracts(ns, serversFile) { // try to complete contracts
             if (file.includes('contract-')) { // if the filename includes "contract" we try to solve it
                 ns.run('contracts.js', 1, 'solve', file, serverData[row][indexHostname]);
             }
+            await ns.sleep(10); // wait a bit. otherwise all contracts will be run at the same time requiring a TON of RAM
         }
     }
 }
