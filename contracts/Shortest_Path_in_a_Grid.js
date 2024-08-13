@@ -43,8 +43,8 @@ import { createTestContract, getContractData, handleContractResult } from 'utils
  * This script solves the "Find Largest Prime Factor" coding contract.
  * 
  * Usage:
- * 1. Test mode: run Find_Largest_Prime_Factor.js test
- * 2. Solve contract: run Find_Largest_Prime_Factor.js <contract_file> <host>
+ * 1. Test mode: run Shortets_Path_in_a_Grid.js test
+ * 2. Solve contract: run Shortets_Path_in_a_Grid.js <contract_file> <host>
  * 
  * Examples:
  * 
@@ -55,24 +55,46 @@ export async function main(ns) {
     const isTestMode = ns.args[0] === "test";
 
     if (isTestMode) {
-        [contractFile, host, inputData] = createTestContract(ns, "Generate IP Addresses");
+        [contractFile, host, inputData] = createTestContract(ns, "Shortest Path in a Grid");
     } else if (ns.args.length === 2) {
         [contractFile, host, inputData] = getContractData(ns, ns.args[0], ns.args[1]);
     } else {
         ns.tprint("Usage:");
-        ns.tprint("1. Test mode: run Generate_IP_Addresses.js test");
-        ns.tprint("2. Solve contract: run Generate_IP_Addresses.js <contract_file> <host>");
+        ns.tprint("1. Test mode: run Shortets_Path_in_a_Grid.js test");
+        ns.tprint("2. Solve contract: run Shortets_Path_in_a_Grid.js <contract_file> <host>");
         return;
     }
     
-    // const solution = do stuff (inputData);
+    const solution = getShortestPath(ns, inputData);
 
     if (isTestMode) {
         ns.tprint(`Attempting to solve contract: ${contractFile} on host: ${host} with input: ${inputData} and solution: ${solution}`)
     }
 
     const reward = ns.codingcontract.attempt(solution, contractFile, host);
-    await handleContractResult(ns, reward, contractFile, host, isTestMode, "Generate IP Addresses");
+    await handleContractResult(ns, reward, contractFile, host, isTestMode, "Shortest Path in a Grid");
 }
 
 // ------------------ functions ------------------
+function getShortestPath(ns, grid) {
+    testPrintGrid(ns, grid);
+
+    return "";
+}
+
+function testPrintGrid(ns, grid) {
+    // we create a copy of the original grid to avoid modifying the original
+    let gridCopy = grid.map(row => row.slice());
+
+    // we replace all 1s with Xs for easier visualization and all 0s with spaces
+    for (let row in gridCopy) {
+        for (let col in gridCopy[row]) {
+            gridCopy[row][col] = gridCopy[row][col] === 1 ? 'X' : ' ';
+        }
+    }
+
+    // we print the grid
+    for (let row in gridCopy) {
+        ns.tprint(gridCopy[row]);
+    }
+}

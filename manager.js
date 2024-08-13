@@ -46,6 +46,9 @@ export async function main(ns) {
     const budgetFactorPurchaseServers = 0.9; // we spend at most 90% of our money on servers
     const hackOnHome = false; // do we hack on the home server?
     const sleepBetweenActions = 100; // sleep between actions in milliseconds. Needed to make sure the actions are finished before we continue
+    const maxTimeToSpendMoney = 8 * 60 * 60 * 1000; // 8 hours until we stop spending money on servers
+    const timeStart = new Date().getTime(); // time where the script was started
+    let timeNow = new Date().getTime(); // current time
 
     // ------------------ kill previous manager.js ------------------
     killPreviousManagers(ns);
@@ -67,6 +70,11 @@ export async function main(ns) {
         let purchaseServersBudget = ns.getServerMoneyAvailable('home') * budgetFactorPurchaseServers; // we spend at most 90% of our money on servers
 
         // ------------------ update cycle ------------------
+        timeNow = new Date().getTime(); // current time
+        if (timeNow - timeStart > maxTimeToSpendMoney) { // after the script has run for x hours or so, we stop spending money on servers
+            spendMoney = false;
+        }
+
         ns.print(`scanning, nuking and trying contracts...`);
         scan(ns, scanFile); // scan all servers with scan.js to update the `servers.txt` file
         await ns.sleep(sleepBetweenActions); // wait a bit to make sure the scan is finished
